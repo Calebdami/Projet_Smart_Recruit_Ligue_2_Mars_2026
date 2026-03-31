@@ -655,6 +655,59 @@ class AuthController {
         });
         }
     }
+
+    // Get current user profile
+    static async getMe(req, res) {
+        try {
+            if (!req.user) {
+                res.status(401).json({
+                    success: false,
+                    error: 'Authentication required',
+                    message: 'You must be authenticated to access this endpoint',
+                });
+                return;
+            }
+
+            // Get user from database
+            const user = await db('users')
+                .where('id', req.user.sub)
+                .where('is_active', true)
+                .first();
+
+            if (!user) {
+                res.status(404).json({
+                    success: false,
+                    error: 'User not found',
+                    message: 'Authenticated user not found in database',
+                });
+                return;
+            }
+
+            // Remove sensitive data
+            const { 
+                password_hash, 
+                email_verification_token, 
+                password_reset_token, 
+                two_factor_secret,
+                ...userProfile 
+            } = user;
+
+            res.json({
+                success: true,
+                data: {
+                    user: userProfile,
+                },
+                message: 'User profile retrieved successfully',
+            });
+        } catch (error) {
+            console.error('Get profile error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Profile retrieval failed',
+                message: 'An error occurred while retrieving user profile',
+            });
+        }
+    }
 }
 
 export { AuthController };

@@ -10,6 +10,7 @@ import { initCronJobs } from './utils/cron.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
+import auditRoutes from './routes/audit.js';
 import candidateRoutes from './routes/candidates.js';
 import jobRoutes from './routes/jobs.js';
 import applicationRoutes from './routes/applications.js';
@@ -90,6 +91,7 @@ app.use(`/api/${config.apiVersion}`, apiRouter);
 
 // Mount routes
 apiRouter.use('/auth', authRoutes);
+apiRouter.use('/audit', auditRoutes);
 apiRouter.use('/candidates', candidateRoutes);
 apiRouter.use('/jobs', jobRoutes);
 apiRouter.use('/applications', applicationRoutes);
@@ -108,6 +110,7 @@ apiRouter.get('/', (req, res) => {
       description: 'Écosystème de Recrutement Prédictif & Engagement Candidat',
       endpoints: {
         auth: `/api/${config.apiVersion}/auth`,
+        audit: `/api/${config.apiVersion}/audit`,
         candidates: `/api/${config.apiVersion}/candidates`,
         jobs: `/api/${config.apiVersion}/jobs`,
         applications: `/api/${config.apiVersion}/applications`,
