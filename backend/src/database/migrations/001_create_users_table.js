@@ -1,8 +1,8 @@
 /**
  * @param { import("knex").Knex } knex
- * @returns { Promise<void> } 
+ * @returns { Promise<void> }
  */
-exports.up = function(knex) {
+export const up = (knex) => {
   return knex.schema.createTable('users', (table) => {
     table.uuid('id').primary().defaultTo(knex.raw('gen_random_uuid()'));
     table.string('email').unique().notNullable();
@@ -25,8 +25,7 @@ exports.up = function(knex) {
     table.jsonb('preferences').defaultTo('{}');
     table.timestamp('created_at').defaultTo(knex.fn.now());
     table.timestamp('updated_at').defaultTo(knex.fn.now());
-    
-    // Indexes
+
     table.index('email');
     table.index('role');
     table.index('is_active');
@@ -37,8 +36,8 @@ exports.up = function(knex) {
 
 /**
  * @param { import("knex").Knex } knex
- * @returns { Promise<void> } 
+ * @returns { Promise<void> }
  */
-exports.down = function(knex) {
+export const down = (knex) => {
   return knex.schema.dropTable('users');
 };
