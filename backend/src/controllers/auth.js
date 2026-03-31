@@ -9,7 +9,8 @@ import {
     generateEmailVerificationToken,
     generatePasswordResetToken,
     isPasswordResetTokenValid,
-    validateCreateUserData
+    validateCreateUserData,
+    validatePassword
 } from '../utils/auth.js';
 import { auditLog } from '../utils/audit.js';
 import { sendEmail } from '../utils/email.js';
@@ -608,22 +609,18 @@ class AuthController {
             return;
         }
 
-        // Validate new password
-        const { validatePassword } = require('../utils/auth');
         const passwordValidation = validatePassword(password);
         if (!passwordValidation.isValid) {
             res.status(400).json({
-            success: false,
-            error: 'Invalid password',
-            errors: { password: passwordValidation.errors },
+                success: false,
+                error: 'Invalid password',
+                errors: { password: passwordValidation.errors },
             });
             return;
         }
 
-        // Hash new password
         const passwordHash = await hashPassword(password);
 
-        // Update user password and clear reset token
         await db('users')
             .where('id', user.id)
             .update({

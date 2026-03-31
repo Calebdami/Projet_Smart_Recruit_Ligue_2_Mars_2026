@@ -272,24 +272,20 @@ const canAccessResource = (user, resourceType, resourceId) => {
     return ['candidate', 'application'].includes(resourceType) && resourceId === user.id;
   }
 
-  return false;
 };
 
 export {
   hashPassword,
   verifyPassword,
   generateTokens,
-  verifyToken,
-  verifyRefreshToken,
   generateTwoFactorSecret,
   generateQRCode,
   verifyTwoFactorToken,
   generateEmailVerificationToken,
   generatePasswordResetToken,
   isPasswordResetTokenValid,
-  validateEmail,
-  validatePassword,
   validateCreateUserData,
+  validatePassword,
   generateSecureToken,
   sanitizeInput,
   maskEmail,
