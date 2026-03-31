@@ -181,3 +181,6 @@ Thumbs.db
 test-results/
 playwright-report/
 test-results.xml
+
+# Données de test locales (binôme B uniquement, ne pas pusher)
+src/database/seeds/
