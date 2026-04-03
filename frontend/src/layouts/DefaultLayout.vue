@@ -8,7 +8,7 @@
             <!-- Logo -->
             <div class="flex-shrink-0 flex items-center">
               <router-link to="/" class="text-xl font-bold text-gray-900">
-                SmartRecruitooooo
+                SmartRecruit
               </router-link>
             </div>
 

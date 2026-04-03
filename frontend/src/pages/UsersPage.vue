@@ -98,8 +98,8 @@
                 {{ formatDate(user.last_login_at) }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                <button class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                <button class="text-red-600 hover:text-red-900">Delete</button>
+                <button @click="handleEditUser(user)" class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                <button @click="handleDeleteUser(user)" class="text-red-600 hover:text-red-900">Delete</button>
               </td>
             </tr>
           </tbody>
@@ -111,11 +111,14 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useUI } from '@/composables/useUI'
 
 const searchQuery = ref('')
 const roleFilter = ref('')
 const statusFilter = ref('')
 const users = ref([])
+
+const ui = useUI()
 
 const filteredUsers = computed(() => {
   return users.value.filter(user => {
@@ -142,6 +145,37 @@ const getRoleClass = (role) => {
 const formatDate = (dateString) => {
   if (!dateString) return 'Never'
   return new Date(dateString).toLocaleDateString()
+}
+
+const handleEditUser = (user) => {
+  ui.showInfo('Edit User', `Editing ${user.first_name} ${user.last_name} - Feature coming soon!`)
+}
+
+const handleDeleteUser = async (user) => {
+  try {
+    const confirmed = await ui.confirmDelete(`user ${user.first_name} ${user.last_name}`)
+    if (confirmed) {
+      ui.setConfirmLoading(true)
+      // TODO: Implement API call to delete user
+      console.log('Deleting user:', user)
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Remove from local state
+      const index = users.value.findIndex(u => u.id === user.id)
+      if (index > -1) {
+        users.value.splice(index, 1)
+      }
+      
+      ui.showSuccess('User Deleted', `${user.first_name} ${user.last_name} has been successfully deleted.`)
+    }
+  } catch (error) {
+    console.error('Delete user error:', error)
+    ui.showError('Delete Failed', 'An error occurred while deleting the user.')
+  } finally {
+    ui.setConfirmLoading(false)
+  }
 }
 
 const loadUsers = async () => {

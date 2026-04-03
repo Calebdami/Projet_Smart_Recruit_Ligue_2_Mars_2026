@@ -1,40 +1,60 @@
 <template>
-  <aside class="w-64 bg-white shadow-lg h-full">
-    <div class="p-6">
-      <h2 class="text-lg font-semibold text-gray-900 mb-6">Menu</h2>
-      
+  <aside class="w-64 bg-gradient-to-b from-gray-900 to-gray-800 h-full shadow-2xl border-r border-gray-700">
+    <!-- Logo Section -->
+    <div class="p-6 border-b border-gray-700">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <span class="text-white font-bold text-lg">SR</span>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-white">Menu</h2>
+          <p class="text-xs text-gray-400">Navigation</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Navigation -->
+    <div class="p-6 flex-1 overflow-y-auto">
       <nav class="space-y-2">
         <router-link
           v-for="item in menuItems"
           :key="item.name"
           :to="item.path"
-          class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors"
+          class="group flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200"
           :class="isActive(item.path) 
-            ? 'bg-indigo-50 text-indigo-700 border-r-2 border-indigo-700' 
-            : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'"
+            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg border-l-4 border-indigo-400' 
+            : 'text-gray-300 hover:bg-gray-700/50 hover:text-white'"
         >
-          <span class="svg-icon mr-3" :class="isActive(item.path) ? 'text-indigo-700' : 'text-gray-400'">
+          <span class="svg-icon mr-3 transition-colors duration-200" :class="isActive(item.path) ? 'text-white' : 'text-gray-400 group-hover:text-white'">
             <component :is="item.icon" />
           </span>
-          {{ item.name }}
+          <span class="flex-1">{{ item.name }}</span>
+          <!-- Active indicator -->
+          <div v-if="isActive(item.path)" class="w-2 h-2 bg-white rounded-full"></div>
         </router-link>
       </nav>
     </div>
 
-    <!-- User section -->
-    <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-200">
-      <div class="flex items-center">
-        <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center">
-          <span class="text-white text-sm font-medium">
-            {{ user?.first_name?.charAt(0) }}{{ user?.last_name?.charAt(0) }}
-          </span>
+    <!-- User Section -->
+    <div class="p-6 border-t border-gray-700 bg-gray-800/50">
+      <div class="flex items-center space-x-3 p-3 rounded-xl bg-gray-700/50 hover:bg-gray-700 transition-colors cursor-pointer">
+        <div class="relative">
+          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg">
+            <span class="text-white font-bold text-sm">
+              {{ user?.first_name?.charAt(0) }}{{ user?.last_name?.charAt(0) }}
+            </span>
+          </div>
+          <div class="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-gray-800"></div>
         </div>
-        <div class="ml-3 flex-1">
-          <p class="text-sm font-medium text-gray-900">
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-medium text-white truncate">
             {{ user?.first_name }} {{ user?.last_name }}
           </p>
-          <p class="text-xs text-gray-500 capitalize">{{ user?.role }}</p>
+          <p class="text-xs text-gray-400 capitalize truncate">{{ user?.role }}</p>
         </div>
+        <svg class="svg-icon text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7m14 2v6a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
       </div>
     </div>
   </aside>
