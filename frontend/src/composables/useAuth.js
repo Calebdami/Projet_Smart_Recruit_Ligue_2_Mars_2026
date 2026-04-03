@@ -21,7 +21,7 @@ export function useAuth() {
     error.value = null
 
     try {
-      const response = await axios.post('/api/v1/auth/login', credentials)
+      const response = await axios.post('/auth/login', credentials)
 
       if (response.data.success) {
         const { user, tokens } = response.data.data
@@ -34,6 +34,9 @@ export function useAuth() {
         axios.defaults.headers.common['Authorization'] = `Bearer ${tokens.access_token}`
 
         return { success: true, user, tokens }
+      } else if (response.data.requires_2fa) {
+        // Handle 2FA required case
+        return { success: false, requires2FA: true, message: response.data.message }
       } else {
         throw new Error(response.data.message || 'Login failed')
       }
@@ -51,7 +54,7 @@ export function useAuth() {
     error.value = null
 
     try {
-      const response = await axios.post('/api/v1/auth/register', userData)
+      const response = await axios.post('/auth/register', userData)
 
       if (response.data.success) {
         return { success: true, message: response.data.message }
@@ -69,7 +72,7 @@ export function useAuth() {
   // Logout function
   const logout = async () => {
     try {
-      await axios.post('/api/v1/auth/logout')
+      await axios.post('/auth/logout')
     } catch (err) {
       console.error('Logout error:', err)
     } finally {
@@ -88,7 +91,7 @@ export function useAuth() {
         throw new Error('No refresh token available')
       }
 
-      const response = await axios.post('/api/v1/auth/refresh', {
+      const response = await axios.post('/auth/refresh', {
         refresh_token: refreshToken
       })
 
@@ -115,7 +118,7 @@ export function useAuth() {
     error.value = null
 
     try {
-      const response = await axios.post('/api/v1/auth/verify-email', { token })
+      const response = await axios.post('/auth/verify-email', { token })
 
       if (response.data.success) {
         return { success: true, message: response.data.message }
@@ -136,7 +139,7 @@ export function useAuth() {
     error.value = null
 
     try {
-      const response = await axios.post('/api/v1/auth/request-password-reset', { email })
+      const response = await axios.post('/auth/request-password-reset', { email })
 
       return { success: true, message: response.data.message }
     } catch (err) {
@@ -153,7 +156,7 @@ export function useAuth() {
     error.value = null
 
     try {
-      const response = await axios.post('/api/v1/auth/reset-password', { token, password })
+      const response = await axios.post('/auth/reset-password', { token, password })
 
       if (response.data.success) {
         return { success: true, message: response.data.message }
@@ -174,7 +177,7 @@ export function useAuth() {
     error.value = null
 
     try {
-      const response = await axios.post('/api/v1/auth/setup-2fa')
+      const response = await axios.post('/auth/setup-2fa')
 
       if (response.data.success) {
         return { success: true, data: response.data.data }
@@ -195,7 +198,7 @@ export function useAuth() {
     error.value = null
 
     try {
-      const response = await axios.post('/api/v1/auth/enable-2fa', { secret, token })
+      const response = await axios.post('/auth/enable-2fa', { secret, token })
 
       if (response.data.success) {
         // Update user in store
@@ -218,7 +221,7 @@ export function useAuth() {
     error.value = null
 
     try {
-      const response = await axios.post('/api/v1/auth/disable-2fa', { token })
+      const response = await axios.post('/auth/disable-2fa', { token })
 
       if (response.data.success) {
         // Update user in store

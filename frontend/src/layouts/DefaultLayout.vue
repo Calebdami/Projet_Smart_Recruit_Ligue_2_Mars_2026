@@ -48,7 +48,7 @@
               <div>
                 <button
                   @click="toggleProfileMenu"
-                  class="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  class="bg-white rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 hover:bg-gray-50 transition-colors"
                   id="user-menu-button"
                   aria-expanded="false"
                   aria-haspopup="true"
@@ -58,13 +58,16 @@
                     v-if="user?.avatar"
                     :src="user.avatar"
                     :alt="user.firstName"
-                    class="h-8 w-8 rounded-full"
+                    class="h-8 w-8 rounded-full object-cover"
                   >
                   <div v-else class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center">
                     <span class="text-white font-medium text-sm">
                       {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
                     </span>
                   </div>
+                  <svg class="ml-2 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
                 </button>
               </div>
 

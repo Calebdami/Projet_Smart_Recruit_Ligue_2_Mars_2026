@@ -86,7 +86,7 @@ const config = {
     // Security Configuration
     security: {
         bcryptRounds: parseInt(process.env.BCRYPT_ROUNDS || '12', 10),
-        corsOrigins: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+        corsOrigins: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:5173'],
         helmetEnabled: process.env.HELMET_ENABLED === 'true',
     },
     

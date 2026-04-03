@@ -85,12 +85,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
+import { useAuth } from '@/composables/useAuth'
 import { useNotifications } from '@/composables/useNotifications'
 
 const router = useRouter()
 const route = useRoute()
-const authStore = useAuthStore()
+const { login } = useAuth()
 const { showNotification } = useNotifications()
 
 const formData = ref({
@@ -104,34 +104,29 @@ const isSubmitting = ref(false)
 const requires2FA = ref(false)
 
 const handleSubmit = async () => {
-  console.log(formData.value)
-  isSubmitting.value = true
-  errors.value = {}
-
-  try {
-    console.log('dedans 1');
-    const result = await authStore.login(formData.value);
-    
-    if (result.requires2FA) {
-      requires2FA.value = true
-      showNotification('Please enter your 2FA code', 'info')
-      return
+    isSubmitting.value = true;
+    errors.value = {};
+    try {
+        const response = await login(formData.value);
+        if (response.success) {
+            showNotification('Login successful!', 'success');
+            const redirect = route.query.redirect || '/dashboard'; 
+            router.push(redirect);
+        } else if (response.requires_2fa || response.requires2FA) {
+            requires2FA.value = true;
+            showNotification('Please enter your 2FA code', 'info');
+        }
+    } catch (error) {
+        const data = error.response?.data;
+      if (data?.requires_2fa || data?.requires2FA) {
+        requires2FA.value = true
+      } else if (data?.message) {
+        errors.value.general = data.message
+      } else {
+        errors.value.general = 'Login failed. Please try again.'
+      }
+    } finally {
+        isSubmitting.value = false;
     }
-    showNotification('Login successful!', 'success')
-
-    // Redirect to intended page or home
-    const redirect = route.query.redirect || '/'
-    router.push(redirect)
-  } catch (error) {
-    if (error.response?.data?.requires2FA) {
-      requires2FA.value = true
-    } else if (error.response?.data?.message) {
-      errors.value.general = error.response.data.message
-    } else {
-      errors.value.general = 'Login failed. Please try again.'
-    }
-  } finally {
-    isSubmitting.value = false
-  }
-}
+};
 </script>

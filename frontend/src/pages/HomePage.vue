@@ -51,19 +51,19 @@
             <div class="bg-white p-6 rounded-lg shadow max-w-md mx-auto">
               <div class="flex items-center space-x-4">
                 <img
-                  v-if="user?.avatar"
-                  :src="user.avatar"
-                  :alt="user.firstName"
-                  class="w-12 h-12 rounded-full"
+                  v-if="user?.avatar_url"
+                  :src="user.avatar_url"
+                  :alt="user.first_name"
+                  class="w-12 h-12 rounded-full object-cover"
                 >
                 <div v-else class="w-12 h-12 rounded-full bg-indigo-500 flex items-center justify-center">
                   <span class="text-white font-medium">
-                    {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
+                    {{ user?.first_name?.charAt(0) }}{{ user?.last_name?.charAt(0) }}
                   </span>
                 </div>
                 <div>
                   <h3 class="text-lg font-medium text-gray-900">
-                    {{ user?.firstName }} {{ user?.lastName }}
+                    {{ user?.first_name }} {{ user?.last_name }}
                   </h3>
                   <p class="text-gray-600">{{ user?.email }}</p>
                   <p class="text-sm text-gray-500 capitalize">{{ user?.role }}</p>

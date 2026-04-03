@@ -15,28 +15,25 @@ const verifyPassword = async (password, hash) => {
 
 // JWT token generation and verification
 const generateTokens = async (user) => {
-  const payload = {
-    sub: user.id,
-    email: user.email,
-    role: user.role,
-    iat: Math.floor(Date.now() / 1000),
-    exp: Math.floor(Date.now() / 1000) + (7 * 24 * 60 * 60), // 7 days
+  const payload = { 
+    id: user._id || user.id, 
+    role: user.role 
   };
-
-  const access_token = jwt.sign(payload, config.jwt.secret, {
-    expiresIn: config.jwt.expiresIn,
-  });
-
+  const access_token = jwt.sign(
+    payload, 
+    process.env.JWT_SECRET || config.jwt.secret,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
   const refresh_token = jwt.sign(
-    { sub: user.id, type: 'refresh' },
-    config.jwt.secret,
-    { expiresIn: config.jwt.refreshExpiresIn }
+    { sub: user._id || user.id, type: 'refresh' },
+    process.env.JWT_SECRET || config.jwt.secret,
+    { expiresIn: config.jwt.refreshExpiresIn || '30d' }
   );
 
   return {
-    access_token,
+    access_token, // Correspond maintenant à la variable ci-dessus
     refresh_token,
-    expires_in: 7 * 24 * 60 * 60, // 7 days in seconds
+    expires_in: 7 * 24 * 60 * 60, // 7 jours en secondes
     token_type: 'Bearer',
   };
 };

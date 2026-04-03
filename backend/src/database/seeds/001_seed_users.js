@@ -8,7 +8,7 @@ export async function seed(knex) {
   await knex('users').insert([
     {
       id: '11111111-1111-4111-8111-111111111111',
-      email: 'admin@smartrecruit.com',
+      email: 'calebdamikpanou@gmail.com',
       password_hash: passwordHash,
       role: 'admin',
       first_name: 'Amina',
@@ -18,7 +18,7 @@ export async function seed(knex) {
       is_active: true,
       email_verified: true,
       email_verified_at: '2026-03-01T09:00:00.000Z',
-      two_factor_enabled: true,
+      two_factor_enabled: false,
       last_login_at: '2026-04-01T08:30:00.000Z',
       last_login_ip: '105.235.10.1',
       preferences: JSON.stringify({
