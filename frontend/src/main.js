@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 import axios from 'axios'
 import { permissionDirective } from './directives/permissions'
+import { usePermissions } from './composables/usePermissions'
 
 // Configure axios
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
@@ -66,6 +67,12 @@ const pinia = createPinia()
 
 // Register global directive
 app.directive('permission', permissionDirective)
+
+// Add global $can function
+app.config.globalProperties.$can = (permission) => {
+  const { hasPermission } = usePermissions()
+  return hasPermission(permission)
+}
 
 // Use plugins
 app.use(pinia)

@@ -13,7 +13,7 @@
 
             <!-- Quick Actions -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div v-if="$can('users.view')" class="bg-white p-6 rounded-lg shadow">
+              <div v-if="$can('view_users')" class="bg-white p-6 rounded-lg shadow">
                 <h3 class="text-lg font-medium text-gray-900 mb-2">User Management</h3>
                 <p class="text-gray-600 mb-4">Manage users, roles, and permissions</p>
                 <router-link
@@ -24,7 +24,7 @@
                 </router-link>
               </div>
 
-              <div v-if="$can('audit.view')" class="bg-white p-6 rounded-lg shadow">
+              <div v-if="$can('view_audit_logs')" class="bg-white p-6 rounded-lg shadow">
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Audit Trail</h3>
                 <p class="text-gray-600 mb-4">View system activity and logs</p>
                 <router-link
