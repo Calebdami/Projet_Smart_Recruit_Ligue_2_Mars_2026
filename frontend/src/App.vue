@@ -1,13 +1,30 @@
 <template>
   <div id="app" class="min-h-screen bg-gray-50">
-    <main class="flex-1">
+    <component :is="layoutComponent">
       <router-view />
-    </main>
+    </component>
   </div>
 </template>
 
 <script setup>
-// App.vue ne gère plus la navigation, DefaultLayout s'en charge
+import { computed, defineAsyncComponent } from 'vue'
+import { useRoute } from 'vue-router'
+import DefaultLayout from '@/layouts/DefaultLayout.vue'
+import MainLayout from '@/layouts/MainLayout.vue'
+import AuthLayout from '@/layouts/AuthLayout.vue'
+
+const route = useRoute()
+
+const layouts = {
+  default: DefaultLayout,
+  MainLayout,
+  AuthLayout
+}
+
+const layoutComponent = computed(() => {
+  const layoutName = route.meta.layout || 'default'
+  return layouts[layoutName] || layouts.default
+})
 </script>
 
 <style>

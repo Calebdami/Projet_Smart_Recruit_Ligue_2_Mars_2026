@@ -6,36 +6,49 @@ const routes = [
     path: '/',
     name: 'Home',
     component: () => import('@/views/Home.vue'),
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, layout: 'MainLayout' }
   },
   {
     path: '/login',
     name: 'Login',
-    component: () => import('@/views/Login.vue'),
-    meta: { guest: true }
+    component: () => import('@/pages/LoginPage.vue'),
+    meta: { guest: true, layout: 'AuthLayout' }
   },
   {
     path: '/register',
     name: 'Register',
-    component: () => import('@/views/Register.vue'),
-    meta: { guest: true }
+    component: () => import('@/pages/RegisterPage.vue'),
+    meta: { guest: true, layout: 'AuthLayout' }
   },
   {
     path: '/profile',
     name: 'Profile',
-    component: () => import('@/views/Profile.vue'),
-    meta: { requiresAuth: true }
+    component: () => import('@/pages/ProfilePage.vue'),
+    meta: { requiresAuth: true, layout: 'MainLayout' }
   },
   {
-    path: '/audit-trail',
+    path: '/users',
+    name: 'Users',
+    component: () => import('@/pages/UsersPage.vue'),
+    meta: { requiresAuth: true, requiresRole: 'admin', layout: 'MainLayout' }
+  },
+  {
+    path: '/audit',
     name: 'AuditTrail',
-    component: () => import('@/views/AuditTrail.vue'),
-    meta: { requiresAuth: true, requiresRole: 'admin' }
+    component: () => import('@/pages/AuditPage.vue'),
+    meta: { requiresAuth: true, requiresRole: 'admin', layout: 'MainLayout' }
+  },
+  {
+    path: '/analytics',
+    name: 'Analytics',
+    component: () => import('@/pages/AnalyticsPage.vue'),
+    meta: { requiresAuth: true, requiresRole: 'admin', layout: 'MainLayout' }
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
-    component: () => import('@/views/NotFound.vue')
+    component: () => import('@/pages/NotFoundPage.vue'),
+    meta: { layout: 'DefaultLayout' }
   }
 ]
 

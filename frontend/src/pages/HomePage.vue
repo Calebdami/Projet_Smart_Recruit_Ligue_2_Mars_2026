@@ -23,7 +23,6 @@
                   Manage Users
                 </router-link>
               </div>
-
               <div v-if="$can('view_audit_logs')" class="bg-white p-6 rounded-lg shadow">
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Audit Trail</h3>
                 <p class="text-gray-600 mb-4">View system activity and logs</p>
