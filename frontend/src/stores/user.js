@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import axios from 'axios'
+import api from '@/config/api'
 
 export const useUserStore = defineStore('user', () => {
   // State
@@ -21,7 +21,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      const response = await axios.get('/api/v1/users/profile')
+      const response = await api.get('/users/profile')
 
       if (response.data.success) {
         currentUser.value = response.data.data.user
@@ -42,7 +42,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      const response = await axios.put('/api/v1/users/profile', updates)
+      const response = await api.put('/users/profile', updates)
 
       if (response.data.success) {
         currentUser.value = response.data.data.user
@@ -66,7 +66,7 @@ export const useUserStore = defineStore('user', () => {
       const formData = new FormData()
       formData.append('avatar', file)
 
-      const response = await axios.post('/api/v1/users/profile/avatar', formData, {
+      const response = await api.post('/users/profile/avatar', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -94,7 +94,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      const response = await axios.get('/api/v1/users', { params })
+      const response = await api.get('/users', { params })
 
       if (response.data.success) {
         users.value = response.data.data.users
@@ -119,7 +119,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      const response = await axios.get(`/api/v1/users/${id}`)
+      const response = await api.get(`/users/${id}`)
 
       if (response.data.success) {
         return { success: true, user: response.data.data.user }
@@ -139,7 +139,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      const response = await axios.put(`/api/v1/users/${id}`, updates)
+      const response = await api.put(`/users/${id}`, updates)
 
       if (response.data.success) {
         return { success: true, user: response.data.data.user, message: response.data.message }
@@ -159,7 +159,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      const response = await axios.delete(`/api/v1/users/${id}/deactivate`)
+      const response = await api.delete(`/users/${id}/deactivate`)
 
       if (response.data.success) {
         return { success: true, message: response.data.message }
@@ -179,7 +179,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
 
     try {
-      const response = await axios.post(`/api/v1/users/${id}/reactivate`)
+      const response = await api.post(`/users/${id}/reactivate`)
 
       if (response.data.success) {
         return { success: true, message: response.data.message }

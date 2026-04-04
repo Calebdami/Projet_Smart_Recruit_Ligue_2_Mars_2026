@@ -151,7 +151,7 @@ import { useNotifications } from '@/composables/useNotifications'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()
-const { showNotification } = useNotifications()
+const { success: showSuccess, error: showError, info: showInfo } = useNotifications()
 
 const user = computed(() => authStore.user)
 const avatarInput = ref(null)
@@ -191,7 +191,7 @@ const loadProfile = async () => {
       bio: profile.bio || ''
     }
   } catch (error) {
-    showNotification('Failed to load profile', 'error')
+    showError('Failed to load profile')
   }
 }
 
@@ -201,13 +201,13 @@ const handleSubmit = async () => {
 
   try {
     await userStore.updateProfile(formData.value)
-    showNotification('Profile updated successfully!', 'success')
+    showSuccess('Profile updated successfully!')
     await authStore.refreshUser()
   } catch (error) {
     if (error.response?.data?.errors) {
       errors.value = error.response.data.errors
     } else {
-      showNotification('Failed to update profile', 'error')
+      showError('Failed to update profile')
     }
   } finally {
     isSubmitting.value = false
@@ -220,13 +220,13 @@ const handleAvatarChange = async (event) => {
 
   // Validate file size (5MB)
   if (file.size > 5 * 1024 * 1024) {
-    showNotification('File size must be less than 5MB', 'error')
+    showError('File size must be less than 5MB')
     return
   }
 
   // Validate file type
   if (!file.type.startsWith('image/')) {
-    showNotification('Please select an image file', 'error')
+    showError('Please select an image file')
     return
   }
 
@@ -234,10 +234,10 @@ const handleAvatarChange = async (event) => {
     const formDataObj = new FormData()
     formDataObj.append('avatar', file)
     await userStore.uploadAvatar(formDataObj)
-    showNotification('Avatar updated successfully!', 'success')
+    showSuccess('Avatar updated successfully!')
     await authStore.refreshUser()
   } catch (error) {
-    showNotification('Failed to upload avatar', 'error')
+    showError('Failed to upload avatar')
   }
 }
 
@@ -245,9 +245,9 @@ const setup2FA = async () => {
   try {
     const setupData = await authStore.setup2FA()
     // In a real app, you'd show a QR code modal here
-    showNotification('2FA setup initiated. Check your authenticator app.', 'info')
+    showInfo('2FA setup initiated. Check your authenticator app.')
   } catch (error) {
-    showNotification('Failed to setup 2FA', 'error')
+    showError('Failed to setup 2FA')
   }
 }
 
@@ -255,10 +255,10 @@ const disable2FA = async () => {
   // In a real app, you'd ask for current 2FA code
   try {
     await authStore.disable2FA('current-code')
-    showNotification('2FA disabled successfully', 'success')
+    showSuccess('2FA disabled successfully')
     await authStore.refreshUser()
   } catch (error) {
-    showNotification('Failed to disable 2FA', 'error')
+    showError('Failed to disable 2FA')
   }
 }
 

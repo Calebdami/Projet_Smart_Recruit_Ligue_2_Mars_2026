@@ -4,7 +4,7 @@
       <header class="mb-10 animate-fade-in-up sm:mb-14">
         <p class="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-200/80 bg-brand-50/80 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-700 dark:border-brand-500/30 dark:bg-brand-950/40 dark:text-brand-300">
           <span class="h-1.5 w-1.5 rounded-full bg-accent-500" />
-          Espace recrutement
+          
         </p>
         <h1 class="max-w-3xl text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
           Bienvenue sur
@@ -194,11 +194,18 @@
 </template>
 
 <script setup>
-import { computed, h } from 'vue'
+import { computed, h, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useAnalyticsStore } from '@/stores/analytics'
 
 const authStore = useAuthStore()
+const analyticsStore = useAnalyticsStore()
 const user = computed(() => authStore.user)
+
+// Fetch real data on mount
+onMounted(() => {
+  analyticsStore.fetchDashboardStats()
+})
 
 const UsersSvg = () =>
   h('svg', { fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24', class: 'h-full w-full' }, [
@@ -246,10 +253,11 @@ const ChartSvg = () =>
     }),
   ])
 
-const stats = [
+// Reactive stats from store - NO MORE HARDCODED VALUES
+const stats = computed(() => [
   {
     label: 'Utilisateurs',
-    value: '1 234',
+    value: analyticsStore.stats.totalUsers?.toLocaleString() || '0',
     change: '+12 %',
     icon: UsersSvg,
     bgColor: 'bg-gradient-to-br from-violet-500 to-purple-700',
@@ -257,7 +265,7 @@ const stats = [
   },
   {
     label: 'Offres actives',
-    value: '89',
+    value: analyticsStore.stats.totalJobs?.toLocaleString() || '0',
     change: '+8 %',
     icon: BriefcaseSvg,
     bgColor: 'bg-gradient-to-br from-blue-500 to-indigo-700',
@@ -265,7 +273,7 @@ const stats = [
   },
   {
     label: 'Candidatures',
-    value: '456',
+    value: analyticsStore.stats.totalApplications?.toLocaleString() || '0',
     change: '+23 %',
     icon: ClipboardSvg,
     bgColor: 'bg-gradient-to-br from-emerald-500 to-teal-700',
@@ -273,13 +281,13 @@ const stats = [
   },
   {
     label: 'Entretiens',
-    value: '23',
+    value: analyticsStore.stats.interviewsCount?.toLocaleString() || '0',
     change: '+5 %',
     icon: ChartSvg,
     bgColor: 'bg-gradient-to-br from-rose-500 to-red-700',
     glow: 'bg-amber-500',
   },
-]
+])
 
 const BoltSvg = () =>
   h('svg', { fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24', class: 'h-full w-full' }, [

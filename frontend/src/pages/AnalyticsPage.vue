@@ -115,7 +115,16 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, h } from 'vue'
+import { computed, onMounted, h } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useAnalyticsStore } from '@/stores/analytics'
+
+const analyticsStore = useAnalyticsStore()
+const { dashboardStats: stats, recentActivity, loading } = storeToRefs(analyticsStore)
+
+onMounted(() => {
+  analyticsStore.refreshAllStats()
+})
 
 const UsersIcon = () =>
   h('svg', { fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24', class: 'h-full w-full' }, [
@@ -164,53 +173,9 @@ const statCards = computed(() => [
   { key: 'totalApplications', label: 'Candidatures', icon: AppIcon, iconBg: 'bg-gradient-to-br from-violet-500 to-purple-700', glow: 'bg-violet-500' },
 ])
 
-const stats = ref({
-  totalUsers: 0,
-  activeUsers: 0,
-  totalJobs: 0,
-  totalApplications: 0
-})
-
-const recentActivity = ref([])
-
 const formatDateTime = (dateString) => {
   if (!dateString) return '-'
   const date = new Date(dateString)
   return date.toLocaleString()
 }
-
-const loadAnalytics = async () => {
-  // TODO: Implement API calls
-  stats.value = {
-    totalUsers: 1234,
-    activeUsers: 856,
-    totalJobs: 45,
-    totalApplications: 789
-  }
-
-  recentActivity.value = [
-    {
-      id: 1,
-      user: {
-        first_name: 'John',
-        last_name: 'Doe'
-      },
-      description: 'created a new job posting',
-      created_at: '2024-03-15T10:30:00Z'
-    },
-    {
-      id: 2,
-      user: {
-        first_name: 'Jane',
-        last_name: 'Smith'
-      },
-      description: 'applied for Senior Developer position',
-      created_at: '2024-03-15T11:45:00Z'
-    }
-  ]
-}
-
-onMounted(() => {
-  loadAnalytics()
-})
 </script>

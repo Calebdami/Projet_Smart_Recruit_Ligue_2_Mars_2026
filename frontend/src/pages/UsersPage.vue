@@ -116,13 +116,6 @@
               <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                 <button
                   type="button"
-                  class="mr-3 text-brand-600 transition-colors hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
-                  @click="handleEditUser(user)"
-                >
-                  Modifier
-                </button>
-                <button
-                  type="button"
                   class="text-rose-600 transition-colors hover:text-rose-800 dark:text-rose-400"
                   @click="handleDeleteUser(user)"
                 >
@@ -139,14 +132,17 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useUserStore } from '@/stores/user'
 import { useUI } from '@/composables/useUI'
+
+const userStore = useUserStore()
+const { users, loading } = storeToRefs(userStore)
+const ui = useUI()
 
 const searchQuery = ref('')
 const roleFilter = ref('')
 const statusFilter = ref('')
-const users = ref([])
-
-const ui = useUI()
 
 const filteredUsers = computed(() => {
   return users.value.filter(user => {
@@ -160,7 +156,6 @@ const filteredUsers = computed(() => {
     return matchesSearch && matchesRole && matchesStatus
   })
 })
-
 const getRoleClass = (role) => {
   const classes = {
     admin: 'bg-violet-100 text-violet-800 dark:bg-violet-950/60 dark:text-violet-300',
@@ -175,28 +170,18 @@ const formatDate = (dateString) => {
   return new Date(dateString).toLocaleDateString()
 }
 
-const handleEditUser = (user) => {
-  ui.showInfo('Edit User', `Editing ${user.first_name} ${user.last_name} - Feature coming soon!`)
-}
-
 const handleDeleteUser = async (user) => {
   try {
     const confirmed = await ui.confirmDelete(`user ${user.first_name} ${user.last_name}`)
     if (confirmed) {
       ui.setConfirmLoading(true)
-      // TODO: Implement API call to delete user
-      console.log('Deleting user:', user)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Remove from local state
-      const index = users.value.findIndex(u => u.id === user.id)
-      if (index > -1) {
-        users.value.splice(index, 1)
+      const result = await userStore.deactivateUser(user.id)
+      if (result.success) {
+        ui.showSuccess('User Deleted', `${user.first_name} ${user.last_name} has been successfully deleted.`)
+        await loadUsers()
+      } else {
+        ui.showError('Delete Failed', result.error)
       }
-      
-      ui.showSuccess('User Deleted', `${user.first_name} ${user.last_name} has been successfully deleted.`)
     }
   } catch (error) {
     console.error('Delete user error:', error)
@@ -207,27 +192,7 @@ const handleDeleteUser = async (user) => {
 }
 
 const loadUsers = async () => {
-  // TODO: Implement API call
-  users.value = [
-    {
-      id: 1,
-      first_name: 'John',
-      last_name: 'Doe',
-      email: 'john@example.com',
-      role: 'admin',
-      is_active: true,
-      last_login_at: '2024-03-15T10:30:00Z'
-    },
-    {
-      id: 2,
-      first_name: 'Jane',
-      last_name: 'Smith',
-      email: 'jane@example.com',
-      role: 'recruiter',
-      is_active: true,
-      last_login_at: '2024-03-14T15:45:00Z'
-    }
-  ]
+  const result = await userStore.fetchUsers()
 }
 
 onMounted(() => {

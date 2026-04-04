@@ -19,7 +19,9 @@ class UsersController {
 
             const user = await db('users')
                 .where('id', userId)
-                .where('is_active', true)
+                .where(function() {
+                    this.where('is_active', true).orWhereNull('is_active')
+                })
                 .select(
                     'id',
                     'email',
@@ -204,7 +206,9 @@ class UsersController {
             const { page = 1, limit = 10, role, search, sortBy = 'created_at', sortOrder = 'desc' } = req.query;
 
             let query = db('users')
-                .where('is_active', true)
+                .where(function() {
+                    this.where('is_active', true).orWhereNull('is_active')
+                })
                 .select(
                     'id',
                     'email',
@@ -248,7 +252,9 @@ class UsersController {
             const users = await query;
 
             // Get total count for pagination
-            let countQuery = db('users').where('is_active', true);
+            let countQuery = db('users').where(function() {
+                this.where('is_active', true).orWhereNull('is_active')
+            });
             if (role) countQuery = countQuery.where('role', role);
             if (search) {
                 countQuery = countQuery.where(function() {
@@ -263,7 +269,7 @@ class UsersController {
             await auditLog({
                 action: 'list',
                 entity_type: 'user',
-                entity_id: null,
+                entity_id: 'all',
                 user_id: req.user.sub,
                 metadata: { filters: req.query },
                 ip_address: req.ip,

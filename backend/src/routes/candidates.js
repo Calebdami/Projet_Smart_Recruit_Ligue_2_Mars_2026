@@ -70,4 +70,22 @@ router.get('/:id',
   CandidateController.getCandidateById
 );
 
+router.get('/:id/cv',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  CandidateController.getCandidateCV
+);
+
+router.post('/:id/parse-cv',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  CandidateController.parseCV
+);
+
+router.get('/:id/applications',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  CandidateController.getCandidateApplications
+);
+
 export default router;

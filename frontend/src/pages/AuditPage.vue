@@ -81,7 +81,6 @@
                     <div class="truncate text-sm font-medium text-slate-900 dark:text-white">
                       {{ log.user?.first_name }} {{ log.user?.last_name }}
                     </div>
-                    <div class="truncate text-sm text-slate-500 dark:text-slate-400">{{ log.user?.email }}</div>
                   </div>
                 </div>
               </td>
@@ -114,11 +113,13 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { auditService } from '@/services'
 
 const searchQuery = ref('')
 const actionFilter = ref('')
 const dateFilter = ref('')
 const logs = ref([])
+const loading = ref(false)
 
 const filteredLogs = computed(() => {
   return logs.value.filter(log => {
@@ -150,39 +151,15 @@ const formatDateTime = (dateString) => {
 }
 
 const loadAuditLogs = async () => {
-  // TODO: Implement API call
-  logs.value = [
-    {
-      id: 1,
-      action: 'login',
-      entity_type: 'user',
-      entity_id: 1,
-      user: {
-        id: 1,
-        first_name: 'John',
-        last_name: 'Doe',
-        email: 'john@example.com'
-      },
-      ip_address: '192.168.1.100',
-      details: 'User logged in successfully',
-      created_at: '2024-03-15T10:30:00Z'
-    },
-    {
-      id: 2,
-      action: 'update',
-      entity_type: 'user',
-      entity_id: 2,
-      user: {
-        id: 2,
-        first_name: 'Jane',
-        last_name: 'Smith',
-        email: 'jane@example.com'
-      },
-      ip_address: '192.168.1.101',
-      details: 'Updated user profile information',
-      created_at: '2024-03-15T11:45:00Z'
-    }
-  ]
+  loading.value = true
+  try {
+    const response = await auditService.getLogs()
+    logs.value = response.data?.logs || []
+  } catch (err) {
+    console.error('Failed to load audit logs:', err)
+  } finally {
+    loading.value = false
+  }
 }
 
 onMounted(() => {

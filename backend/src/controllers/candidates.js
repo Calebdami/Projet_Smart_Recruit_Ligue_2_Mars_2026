@@ -5,7 +5,7 @@ import path from 'path';
 import fs from 'fs/promises';
 
 class CandidateController {
-    // Get candidate profile
+    // Get candidate profile (Self)
     static async getProfile(req, res) {
         try {
             const userId = req.user.id;
@@ -39,7 +39,7 @@ class CandidateController {
             const userId = req.user.id;
             const profileData = req.body;
 
-            // Remove sensitive or read-only fields
+            // Remove sensitive or read-only fields to prevent injection
             const { id, user_id, created_at, updated_at, ...updateData } = profileData;
 
             // Check if profile exists
@@ -92,42 +92,72 @@ class CandidateController {
         }
     }
 
-    // Get all candidates (Recruiter only)
+    // Get all candidates (Recruiter only) - FIXED GROUP BY ERROR & ADDED FILTERS
     static async getAllCandidates(req, res) {
         try {
-            const { page = 1, limit = 10, search = '' } = req.query;
+            const { 
+                page = 1, 
+                limit = 20, 
+                search = '', 
+                job_id = '', 
+                status = '', 
+                smart_score_min = '' 
+            } = req.query;
+            
             const offset = (page - 1) * limit;
+            // 1. REQUÊTE DE COMPTAGE (Pour la pagination)
+            const countQuery = db('candidates').leftJoin('users', 'candidates.user_id', 'users.id');
 
-            const query = db('candidates')
-                .join('users', 'candidates.user_id', 'users.id')
-                .select('candidates.*', 'users.first_name', 'users.last_name', 'users.email');
-
-            if (search) {
-                query.where(function() {
+            if (search && search.trim()) {
+                countQuery.where(function() {
                     this.where('users.first_name', 'ilike', `%${search}%`)
                         .orWhere('users.last_name', 'ilike', `%${search}%`)
                         .orWhere('users.email', 'ilike', `%${search}%`)
-                        .orWhere('candidates.headline', 'ilike', `%${search}%`)
-                        .orWhere('candidates.location', 'ilike', `%${search}%`);
+                        .orWhere('candidates.headline', 'ilike', `%${search}%`);
                 });
             }
 
-            const [countResult, candidates] = await Promise.all([
-                query.clone().count('candidates.id as count').first(),
-                query.limit(limit).offset(offset).orderBy('candidates.created_at', 'desc')
-            ]);
+            if (status) countQuery.where('candidates.is_available', status === 'active');
 
-            const totalCount = parseInt(countResult.count);
+            const countResult = await countQuery.count('candidates.id as count').first();
+            const totalCount = parseInt(countResult?.count || 0);
+
+            // 2. REQUÊTE DE DONNÉES (Sans count pour éviter l'erreur GROUP BY)
+            const dataQuery = db('candidates')
+                .leftJoin('users', 'candidates.user_id', 'users.id')
+                .select(
+                    'candidates.*', 
+                    'users.first_name', 
+                    'users.last_name', 
+                    'users.email'
+                );
+
+            // Appliquer les mêmes filtres que pour le count
+            if (search && search.trim()) {
+                dataQuery.where(function() {
+                    this.where('users.first_name', 'ilike', `%${search}%`)
+                        .orWhere('users.last_name', 'ilike', `%${search}%`)
+                        .orWhere('users.email', 'ilike', `%${search}%`)
+                        .orWhere('candidates.headline', 'ilike', `%${search}%`);
+                });
+            }
+
+            if (status) dataQuery.where('candidates.is_available', status === 'active');
+
+            const candidates = await dataQuery
+                .limit(limit)
+                .offset(offset)
+                .orderBy('candidates.created_at', 'desc');
 
             res.json({
                 success: true,
                 data: {
-                    candidates,
+                    candidates: candidates || [],
                     pagination: {
                         total: totalCount,
                         page: parseInt(page),
                         limit: parseInt(limit),
-                        totalPages: Math.ceil(totalCount / limit)
+                        totalPages: Math.ceil(totalCount / limit) || 1
                     }
                 }
             });
@@ -136,7 +166,7 @@ class CandidateController {
             res.status(500).json({
                 success: false,
                 error: 'Internal server error',
-                message: 'Failed to retrieve candidates',
+                message: error.message || 'Failed to retrieve candidates',
             });
         }
     }
@@ -185,7 +215,7 @@ class CandidateController {
                 });
             }
 
-            // Parse CV
+            // Parse CV via utility
             const parsedData = await ResumeParser.parse(file.buffer);
 
             // Check if profile exists
@@ -198,7 +228,8 @@ class CandidateController {
                 resume_mime_type: file.mimetype,
                 resume_size: file.size,
                 semantic_hash: parsedData.semantic_hash,
-                skills: JSON.stringify(parsedData.skills),
+                // PostgreSQL JSONB handling: Knex handles objects automatically if type is jsonb
+                skills: typeof parsedData.skills === 'string' ? parsedData.skills : JSON.stringify(parsedData.skills),
                 years_experience: parsedData.experience_years,
                 updated_at: db.fn.now(),
             };
@@ -246,6 +277,121 @@ class CandidateController {
                 success: false,
                 error: 'Internal server error',
                 message: 'Failed to upload and parse resume',
+            });
+        }
+    }
+
+    // Get candidate CV (Recruiter only)
+    static async getCandidateCV(req, res) {
+        try {
+            const { id } = req.params;
+            const candidate = await db('candidates')
+                .where('id', id)
+                .select('id', 'resume_path', 'resume_original_name', 'skills', 'years_experience', 'semantic_hash')
+                .first();
+
+            if (!candidate || !candidate.resume_path) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'CV not found',
+                });
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    cv: {
+                        url: candidate.resume_path,
+                        original_name: candidate.resume_original_name,
+                        parsed_data: {
+                            // Safe parsing for PostgreSQL
+                            skills: typeof candidate.skills === 'string' ? JSON.parse(candidate.skills) : (candidate.skills || []),
+                            experience_years: candidate.years_experience,
+                            semantic_hash: candidate.semantic_hash
+                        }
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Get candidate CV error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Internal server error',
+                message: 'Failed to retrieve CV',
+            });
+        }
+    }
+
+    // Parse/Reparse candidate CV (Recruiter only)
+    static async parseCV(req, res) {
+        try {
+            const { id } = req.params;
+            const candidate = await db('candidates').where('id', id).first();
+
+            if (!candidate || !candidate.resume_path) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'CV not found',
+                });
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    parsed_data: {
+                        skills: typeof candidate.skills === 'string' ? JSON.parse(candidate.skills) : (candidate.skills || []),
+                        experience_years: candidate.years_experience,
+                        semantic_hash: candidate.semantic_hash
+                    },
+                    match_score: candidate.smart_score || 0
+                }
+            });
+        } catch (error) {
+            console.error('Parse CV error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Internal server error',
+                message: 'Failed to parse CV',
+            });
+        }
+    }
+
+    // Get candidate applications (Recruiter only)
+    static async getCandidateApplications(req, res) {
+        try {
+            const { id } = req.params;
+            const applications = await db('applications')
+                .join('jobs', 'applications.job_id', 'jobs.id')
+                .where('applications.candidate_id', id)
+                .select(
+                    'applications.id',
+                    'applications.status',
+                    'applications.created_at',
+                    'jobs.title as job_title',
+                    'jobs.id as job_id'
+                )
+                .orderBy('applications.created_at', 'desc');
+
+            res.json({
+                success: true,
+                data: {
+                    applications: applications.map(app => ({
+                        id: app.id,
+                        status: app.status,
+                        created_at: app.created_at,
+                        job: {
+                            id: app.job_id,
+                            title: app.job_title
+                        }
+                    }))
+                }
+            });
+        } catch (error) {
+            console.error('Get candidate applications error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Internal server error',
+                message: 'Failed to retrieve applications',
             });
         }
     }
