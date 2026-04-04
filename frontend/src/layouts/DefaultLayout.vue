@@ -1,276 +1,187 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-sm">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-          <div class="flex">
-            <!-- Logo -->
-            <div class="flex-shrink-0 flex items-center">
-              <router-link to="/" class="text-xl font-bold text-gray-900">
-                SmartRecruit
-              </router-link>
-            </div>
-
-            <!-- Navigation Links -->
-            <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
-              <router-link
-                to="/"
-                class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                active-class="border-indigo-500 text-gray-900"
-              >
-                Dashboard
-              </router-link>
-
-              <router-link
-                v-if="$can('view_users')"
-                to="/users"
-                class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                active-class="border-indigo-500 text-gray-900"
-              >
-                Users
-              </router-link>
-
-              <router-link
-                v-if="$can('view_audit_logs')"
-                to="/audit"
-                class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                active-class="border-indigo-500 text-gray-900"
-              >
-                Audit Trail
-              </router-link>
-            </div>
+  <div class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-accent-50/20 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 mesh-bg">
+    <nav
+      class="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 shadow-sm backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-slate-900/85"
+    >
+      <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <router-link to="/" class="group flex items-center gap-2.5">
+          <div
+            class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-accent-600 shadow-md transition-all duration-300 group-hover:scale-105 group-hover:shadow-glow"
+          >
+            <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+              />
+            </svg>
           </div>
+          <span
+            class="text-lg font-bold text-slate-900 transition-colors group-hover:text-brand-600 dark:text-white dark:group-hover:text-brand-400"
+          >
+            SmartRecruit
+          </span>
+        </router-link>
 
-          <!-- Profile dropdown -->
-          <div class="hidden sm:ml-6 sm:flex sm:items-center">
-            <div class="ml-3 relative">
-              <div>
-                <button
-                  @click="toggleProfileMenu"
-                  class="bg-white rounded-full flex items-center text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 hover:bg-gray-50 transition-colors p-1"
-                  id="user-menu-button"
-                  aria-expanded="false"
-                  aria-haspopup="true"
-                >
-                  <span class="sr-only">Open user menu</span>
-                  <img
-                    v-if="user?.avatar"
-                    :src="user.avatar"
-                    :alt="user.firstName"
-                    class="h-8 w-8 rounded-full object-cover"
-                  >
-                  <div v-else class="h-8 w-8 rounded-full bg-indigo-500 flex items-center justify-center">
-                    <span class="text-white font-medium text-sm">
-                      {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
-                    </span>
-                  </div>
-                  <svg class="svg-icon-sm text-gray-400 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                  </svg>
-                </button>
+        <div class="flex items-center gap-2 sm:gap-4">
+          <div class="hidden items-center gap-1 sm:flex">
+            <router-link
+              v-for="link in navLinks"
+              v-show="link.show"
+              :key="link.to"
+              :to="link.to"
+              class="rounded-xl px-3 py-2 text-sm font-medium transition-all duration-200"
+              :class="
+                route.path === link.to
+                  ? 'bg-brand-50 text-brand-700 dark:bg-brand-950/50 dark:text-brand-300'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+              "
+            >
+              {{ link.label }}
+            </router-link>
+          </div>
+          <ThemeToggle />
+
+          <div v-if="user" class="relative">
+            <button
+              type="button"
+              class="flex items-center gap-2 rounded-xl p-1.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+              @click="toggleProfileMenu"
+            >
+              <div
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-600 text-xs font-bold text-white"
+              >
+                {{ initials }}
               </div>
+              <svg
+                class="h-4 w-4 text-slate-400 transition-transform"
+                :class="{ 'rotate-180': showProfileMenu }"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
 
-              <!-- Profile dropdown menu -->
+            <transition name="dropdown">
               <div
                 v-show="showProfileMenu"
-                class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
-                role="menu"
-                aria-orientation="vertical"
-                aria-labelledby="user-menu-button"
-                tabindex="-1"
+                class="absolute right-0 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft-lg dark:border-slate-700 dark:bg-slate-900"
               >
-                <div class="px-4 py-2 text-sm text-gray-700 border-b">
-                  <div class="font-medium">{{ user?.firstName }} {{ user?.lastName }}</div>
-                  <div class="text-gray-500">{{ user?.email }}</div>
+                <div class="border-b border-slate-100 px-4 py-3 dark:border-slate-800">
+                  <div class="font-semibold text-slate-900 dark:text-white">{{ displayName }}</div>
+                  <div class="truncate text-sm text-slate-500 dark:text-slate-400">{{ user?.email }}</div>
                 </div>
-
                 <router-link
                   to="/profile"
-                  class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  role="menuitem"
-                  tabindex="-1"
+                  class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-800"
+                  @click="showProfileMenu = false"
                 >
-                  Your Profile
+                  Profil
                 </router-link>
-
                 <button
+                  type="button"
+                  class="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 dark:border-slate-800 dark:text-rose-400 dark:hover:bg-rose-950/30"
                   @click="handleLogout"
-                  class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  role="menuitem"
-                  tabindex="-1"
                 >
-                  Sign out
+                  Déconnexion
                 </button>
               </div>
-            </div>
+            </transition>
           </div>
 
-          <!-- Mobile menu button -->
-          <div class="sm:hidden">
-            <button
-              @click="toggleMobileMenu"
-              class="bg-white inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
-            >
-              <span class="sr-only">Open main menu</span>
-              <svg
-                :class="{ 'hidden': showMobileMenu, 'block': !showMobileMenu }"
-                class="svg-icon"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-              <svg
-                :class="{ 'hidden': !showMobileMenu, 'block': showMobileMenu }"
-                class="svg-icon"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden="true"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Mobile menu -->
-      <div v-show="showMobileMenu" class="sm:hidden">
-        <div class="pt-2 pb-3 space-y-1">
-          <router-link
-            to="/"
-            class="bg-indigo-50 border-indigo-500 text-indigo-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
-            active-class="bg-indigo-50 border-indigo-500 text-indigo-700"
-          >
-            Dashboard
-          </router-link>
-
-          <router-link
-            v-if="$can('view_users')"
-            to="/users"
-            class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
-            active-class="bg-indigo-50 border-indigo-500 text-indigo-700"
-          >
-            Users
-          </router-link>
-
-          <router-link
-            v-if="$can('view_audit_logs')"
-            to="/audit"
-            class="border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
-            active-class="bg-indigo-50 border-indigo-500 text-indigo-700"
-          >
-            Audit Trail
-          </router-link>
-        </div>
-
-        <div class="pt-4 pb-3 border-t border-gray-200">
-          <div class="flex items-center px-4">
-            <div class="flex-shrink-0">
-              <img
-                v-if="user?.avatar"
-                :src="user.avatar"
-                :alt="user.firstName"
-                class="h-10 w-10 rounded-full"
-              >
-              <div v-else class="h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center">
-                <span class="text-white font-medium">
-                  {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
-                </span>
-              </div>
-            </div>
-            <div class="ml-3">
-              <div class="text-base font-medium text-gray-800">
-                {{ user?.firstName }} {{ user?.lastName }}
-              </div>
-              <div class="text-sm font-medium text-gray-500">
-                {{ user?.email }}
-              </div>
-            </div>
-          </div>
-          <div class="mt-3 space-y-1">
+          <div v-else class="flex items-center gap-2">
             <router-link
-              to="/profile"
-              class="block px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+              to="/login"
+              class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-600 transition-colors hover:text-brand-600 dark:text-slate-300 dark:hover:text-brand-400"
             >
-              Your Profile
+              Connexion
             </router-link>
-            <button
-              @click="handleLogout"
-              class="block w-full text-left px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100"
-            >
-              Sign out
-            </button>
+            <router-link to="/register" class="btn-primary !py-2 !text-sm"> S'inscrire </router-link>
           </div>
         </div>
       </div>
     </nav>
 
-    <!-- Main content -->
-    <main class="flex-1">
+    <div class="min-h-[calc(100vh-4rem)]">
       <slot />
-    </main>
-
-    <!-- Footer -->
-    <footer class="bg-white border-t">
-      <div class="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8">
-        <div class="text-center text-sm text-gray-500">
-          © 2024 SmartRecruit. All rights reserved.
-        </div>
-      </div>
-    </footer>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useAuth } from '@/composables/useAuth'
-import { useRouter } from 'vue-router'
+import { useUI } from '@/composables/useUI'
+import { usePermissions } from '@/composables/usePermissions'
+import ThemeToggle from '@/components/common/ThemeToggle.vue'
 
+const route = useRoute()
+const router = useRouter()
 const authStore = useAuthStore()
 const { logout } = useAuth()
-const router = useRouter()
+const ui = useUI()
+const { hasPermission } = usePermissions()
 
 const user = computed(() => authStore.user)
 const showProfileMenu = ref(false)
-const showMobileMenu = ref(false)
+
+const initials = computed(() => {
+  const u = user.value
+  if (!u) return '?'
+  const a = (u.first_name || u.firstName || '').charAt(0)
+  const b = (u.last_name || u.lastName || '').charAt(0)
+  return (a + b).toUpperCase() || '?'
+})
+
+const displayName = computed(() => {
+  const u = user.value
+  if (!u) return ''
+  if (u.first_name || u.last_name) return `${u.first_name || ''} ${u.last_name || ''}`.trim()
+  if (u.firstName || u.lastName) return `${u.firstName || ''} ${u.lastName || ''}`.trim()
+  return u.email || 'Utilisateur'
+})
+
+const navLinks = computed(() => [
+  { to: '/', label: 'Accueil', show: true },
+  { to: '/users', label: 'Utilisateurs', show: hasPermission('view_users') },
+  { to: '/audit', label: 'Audit', show: hasPermission('view_audit_logs') },
+])
 
 const toggleProfileMenu = () => {
   showProfileMenu.value = !showProfileMenu.value
 }
 
-const toggleMobileMenu = () => {
-  showMobileMenu.value = !showMobileMenu.value
-}
-
 const handleLogout = async () => {
   try {
-    await logout()
-    router.push('/login')
-  } catch (error) {
-    console.error('Logout error:', error)
-  }
-}
-
-// Close menus when clicking outside
-const handleClickOutside = (event) => {
-  if (!event.target.closest('#user-menu-button')) {
+    const confirmed = await ui.confirmLogout()
+    if (confirmed) {
+      ui.setConfirmLoading(true)
+      await logout()
+      ui.showSuccess('Déconnexion', 'À bientôt.')
+      router.push('/login')
+    }
+  } catch (e) {
+    console.error(e)
+  } finally {
+    ui.setConfirmLoading(false)
     showProfileMenu.value = false
   }
 }
-
-onMounted(() => {
-  document.addEventListener('click', handleClickOutside)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', handleClickOutside)
-})
 </script>
+
+<style scoped>
+.dropdown-enter-active,
+.dropdown-leave-active {
+  transition: all 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.dropdown-enter-from,
+.dropdown-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+}
+</style>

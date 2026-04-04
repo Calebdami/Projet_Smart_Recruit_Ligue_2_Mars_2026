@@ -3,6 +3,10 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import axios from 'axios'
+import './index.css'
+import { initTheme } from './composables/useTheme'
+
+initTheme()
 import { permissionDirective } from './directives/permissions'
 import { usePermissions } from './composables/usePermissions'
 

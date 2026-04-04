@@ -21,16 +21,27 @@ let notificationId = 0
 export function useUI() {
   // Notifications
   const addNotification = (notification) => {
-    const id = ++notificationId
-    const newNotification = {
-      id,
+    const merged = {
       type: 'info',
       title: '',
       message: '',
       duration: 5000,
-      ...notification
+      ...notification,
     }
-    
+    const title = String(merged.title ?? '').trim()
+    const message = String(merged.message ?? '').trim()
+    if (!title && !message) {
+      return null
+    }
+
+    const id = ++notificationId
+    const newNotification = {
+      id,
+      ...merged,
+      title,
+      message,
+    }
+
     notifications.value.push(newNotification)
     
     // Auto remove after duration
@@ -140,6 +151,22 @@ export function useUI() {
     confirmModal.loading = loading
   }
 
+  // Generic notify function
+  const notify = (type, message, title = '', duration) => {
+    switch (type) {
+      case 'success':
+        return showSuccess(title, message, duration)
+      case 'error':
+        return showError(title, message, duration)
+      case 'warning':
+        return showWarning(title, message, duration)
+      case 'info':
+        return showInfo(title, message, duration)
+      default:
+        return showInfo(title, message, duration)
+    }
+  }
+
   // Clear all notifications
   const clearNotifications = () => {
     notifications.value = []
@@ -149,7 +176,7 @@ export function useUI() {
     // State
     notifications,
     confirmModal,
-    
+
     // Notifications
     addNotification,
     removeNotification,
@@ -157,6 +184,7 @@ export function useUI() {
     showError,
     showWarning,
     showInfo,
+    notify,
     clearNotifications,
     
     // Confirmation

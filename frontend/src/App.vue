@@ -1,16 +1,8 @@
 <template>
-  <div id="app" class="min-h-screen bg-gray-50">
-    <component :is="layoutComponent">
-      <router-view />
-    </component>
-    
-    <!-- Global Notifications -->
-    <Notifications
-      :notifications="ui.notifications"
-      @remove="ui.removeNotification"
-    />
-    
-    <!-- Global Confirmation Modal -->
+  <div
+    id="app"
+    class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-accent-50/30 text-slate-900 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100 mesh-bg"
+  >
     <ConfirmModal
       :show="ui.confirmModal.show"
       :type="ui.confirmModal.type"
@@ -24,6 +16,16 @@
       @confirm="ui.handleConfirm"
       @cancel="ui.handleCancel"
     />
+
+    <transition name="layout-fade" mode="out-in">
+      <component :is="layoutComponent" :key="layoutName">
+        <router-view v-slot="{ Component }">
+          <transition name="page-fade" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </component>
+    </transition>
   </div>
 </template>
 
@@ -34,7 +36,6 @@ import { useUI } from '@/composables/useUI'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
-import Notifications from '@/components/common/Notifications.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 
 const route = useRoute()
@@ -43,32 +44,47 @@ const ui = useUI()
 const layouts = {
   default: DefaultLayout,
   MainLayout,
-  AuthLayout
+  AuthLayout,
 }
 
+const layoutName = computed(() => route.meta.layout || 'default')
+
 const layoutComponent = computed(() => {
-  const layoutName = route.meta.layout || 'default'
-  return layouts[layoutName] || layouts.default
+  return layouts[layoutName.value] || layouts.default
 })
 </script>
 
 <style>
-/* Base styles */
+.layout-fade-enter-active,
+.layout-fade-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.layout-fade-enter-from,
+.layout-fade-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.page-fade-enter-from,
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
 * {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f9fafb;
 }
 
-/* SVG utility classes */
 .svg-icon {
   width: 1rem;
   height: 1rem;
@@ -91,24 +107,6 @@ body {
   height: 1.5rem;
 }
 
-/* Button styles */
-.btn-primary {
-  @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
-}
-
-.btn-secondary {
-  @apply inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500;
-}
-
-.btn-danger {
-  @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500;
-}
-
-.btn-warning {
-  @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500;
-}
-
-/* Responsive utilities */
 @media (max-width: 640px) {
   .svg-icon {
     width: 0.875rem;
@@ -116,7 +114,6 @@ body {
   }
 }
 
-/* Animation utilities */
 .animate-spin {
   animation: spin 1s linear infinite;
 }

@@ -45,6 +45,18 @@ const routes = [
     meta: { requiresAuth: true, requiresRole: 'admin', layout: 'MainLayout' }
   },
   {
+    path: '/terms',
+    name: 'Terms',
+    component: () => import('@/pages/TermsPage.vue'),
+    meta: { layout: 'DefaultLayout' }
+  },
+  {
+    path: '/privacy',
+    name: 'Privacy',
+    component: () => import('@/pages/PrivacyPage.vue'),
+    meta: { layout: 'DefaultLayout' }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/pages/NotFoundPage.vue'),

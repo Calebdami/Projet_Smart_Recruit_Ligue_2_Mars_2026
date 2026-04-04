@@ -1,194 +1,144 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
-    <div class="max-w-3xl mx-auto py-6 sm:px-6 lg:px-8">
-      <div class="px-4 py-6 sm:px-0">
-        <div class="bg-white shadow rounded-lg">
-          <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">
-              Profile Settings
-            </h3>
+  <div class="mx-auto max-w-3xl animate-fade-in-up pb-8">
+    <div class="mb-8">
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Paramètres du profil</h1>
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">Photo, coordonnées et sécurité du compte.</p>
+    </div>
 
-            <form @submit.prevent="handleSubmit" class="space-y-6">
-              <!-- Avatar Section -->
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                  Profile Picture
-                </label>
-                <div class="flex items-center space-x-4">
-                  <img
-                    v-if="user?.avatar"
-                    :src="user.avatar"
-                    :alt="user.firstName"
-                    class="w-20 h-20 rounded-full object-cover"
-                  >
-                  <div v-else class="w-20 h-20 rounded-full bg-indigo-500 flex items-center justify-center">
-                    <span class="text-white text-xl font-medium">
-                      {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
-                    </span>
-                  </div>
-                  <div>
-                    <input
-                      ref="avatarInput"
-                      type="file"
-                      accept="image/*"
-                      @change="handleAvatarChange"
-                      class="hidden"
-                    >
-                    <button
-                      type="button"
-                      @click="$refs.avatarInput.click()"
-                      class="btn-secondary text-sm"
-                    >
-                      Change Picture
-                    </button>
-                    <p class="text-xs text-gray-500 mt-1">
-                      JPG, PNG or GIF. Max size 5MB.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Personal Information -->
-              <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                <div>
-                  <label for="firstName" class="block text-sm font-medium text-gray-700">
-                    First Name
-                  </label>
-                  <input
-                    id="firstName"
-                    v-model="formData.firstName"
-                    type="text"
-                    required
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  >
-                  <div v-if="errors.firstName" class="mt-1 text-sm text-red-600">
-                    {{ errors.firstName }}
-                  </div>
-                </div>
-
-                <div>
-                  <label for="lastName" class="block text-sm font-medium text-gray-700">
-                    Last Name
-                  </label>
-                  <input
-                    id="lastName"
-                    v-model="formData.lastName"
-                    type="text"
-                    required
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  >
-                  <div v-if="errors.lastName" class="mt-1 text-sm text-red-600">
-                    {{ errors.lastName }}
-                  </div>
-                </div>
-
-                <div>
-                  <label for="email" class="block text-sm font-medium text-gray-700">
-                    Email Address
-                  </label>
-                  <input
-                    id="email"
-                    v-model="formData.email"
-                    type="email"
-                    disabled
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-50 text-gray-500 sm:text-sm"
-                  >
-                  <p class="mt-1 text-xs text-gray-500">
-                    Email cannot be changed. Contact admin to update.
-                  </p>
-                </div>
-
-                <div>
-                  <label for="phone" class="block text-sm font-medium text-gray-700">
-                    Phone Number
-                  </label>
-                  <input
-                    id="phone"
-                    v-model="formData.phone"
-                    type="tel"
-                    class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  >
-                  <div v-if="errors.phone" class="mt-1 text-sm text-red-600">
-                    {{ errors.phone }}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Bio -->
-              <div>
-                <label for="bio" class="block text-sm font-medium text-gray-700">
-                  Bio
-                </label>
-                <textarea
-                  id="bio"
-                  v-model="formData.bio"
-                  rows="4"
-                  class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  placeholder="Tell us about yourself..."
-                ></textarea>
-                <div v-if="errors.bio" class="mt-1 text-sm text-red-600">
-                  {{ errors.bio }}
-                </div>
-              </div>
-
-              <!-- 2FA Section -->
-              <div class="border-t pt-6">
-                <h4 class="text-md font-medium text-gray-900 mb-4">
-                  Two-Factor Authentication
-                </h4>
-
-                <div v-if="!user?.twoFactorEnabled" class="space-y-4">
-                  <p class="text-sm text-gray-600">
-                    Add an extra layer of security to your account by enabling two-factor authentication.
-                  </p>
-                  <button
-                    type="button"
-                    @click="setup2FA"
-                    class="btn-primary"
-                  >
-                    Enable 2FA
-                  </button>
-                </div>
-
-                <div v-else class="space-y-4">
-                  <div class="flex items-center">
-                    <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                    </svg>
-                    <span class="text-sm text-green-700">Two-factor authentication is enabled</span>
-                  </div>
-                  <button
-                    type="button"
-                    @click="disable2FA"
-                    class="btn-secondary text-red-600 hover:text-red-700"
-                  >
-                    Disable 2FA
-                  </button>
-                </div>
-              </div>
-
-              <!-- Actions -->
-              <div class="flex justify-end space-x-3 pt-6 border-t">
-                <button
-                  type="button"
-                  @click="resetForm"
-                  class="btn-secondary"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  :disabled="isSubmitting"
-                  class="btn-primary"
-                >
-                  <span v-if="isSubmitting">Saving...</span>
-                  <span v-else>Save Changes</span>
-                </button>
-              </div>
-            </form>
+    <div class="card-elevated overflow-hidden">
+      <div class="panel-header bg-gradient-to-r from-brand-50/50 to-accent-50/30 dark:from-brand-950/30 dark:to-slate-900">
+        <div class="flex items-center gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600 text-white shadow-md">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2 class="font-semibold text-slate-900 dark:text-white">Identité</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Visible par votre organisation</p>
           </div>
         </div>
       </div>
+
+      <form class="space-y-8 p-6 sm:p-8" @submit.prevent="handleSubmit">
+        <div>
+          <label class="label-field">Photo de profil</label>
+          <div class="flex flex-wrap items-center gap-6">
+            <img
+              v-if="user?.avatar || user?.avatar_url"
+              :src="user.avatar || user.avatar_url"
+              :alt="displayFirst"
+              class="h-24 w-24 rounded-2xl object-cover shadow-md ring-2 ring-brand-100 dark:ring-brand-900/40"
+            >
+            <div
+              v-else
+              class="flex h-24 w-24 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-600 text-2xl font-bold text-white shadow-md"
+            >
+              {{ initials }}
+            </div>
+            <div>
+              <input ref="avatarInput" type="file" accept="image/*" class="hidden" @change="handleAvatarChange">
+              <button type="button" class="btn-secondary text-sm" @click="$refs.avatarInput.click()">
+                Changer la photo
+              </button>
+              <p class="mt-2 text-xs text-slate-500 dark:text-slate-500">JPG, PNG ou WebP — max 5 Mo</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div>
+            <label for="firstName" class="label-field">Prénom</label>
+            <input id="firstName" v-model="formData.firstName" type="text" required class="input-field">
+            <div v-if="errors.firstName" class="mt-1.5 text-sm text-red-600 dark:text-red-400">
+              {{ errors.firstName }}
+            </div>
+          </div>
+          <div>
+            <label for="lastName" class="label-field">Nom</label>
+            <input id="lastName" v-model="formData.lastName" type="text" required class="input-field">
+            <div v-if="errors.lastName" class="mt-1.5 text-sm text-red-600 dark:text-red-400">
+              {{ errors.lastName }}
+            </div>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="email" class="label-field">E-mail</label>
+            <input id="email" v-model="formData.email" type="email" disabled class="input-field cursor-not-allowed opacity-80">
+            <p class="mt-1.5 text-xs text-slate-500">Modification par un administrateur uniquement.</p>
+          </div>
+          <div class="sm:col-span-2">
+            <label for="phone" class="label-field">Téléphone</label>
+            <input id="phone" v-model="formData.phone" type="tel" class="input-field">
+            <div v-if="errors.phone" class="mt-1.5 text-sm text-red-600 dark:text-red-400">
+              {{ errors.phone }}
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label for="bio" class="label-field">Bio</label>
+          <textarea
+            id="bio"
+            v-model="formData.bio"
+            rows="4"
+            class="input-field resize-y min-h-[100px]"
+            placeholder="Quelques lignes sur votre parcours…"
+          />
+          <div v-if="errors.bio" class="mt-1.5 text-sm text-red-600 dark:text-red-400">
+            {{ errors.bio }}
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-6 dark:border-slate-700 dark:bg-slate-800/40">
+          <div class="mb-4 flex items-center gap-2">
+            <svg class="h-5 w-5 text-brand-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+              />
+            </svg>
+            <h4 class="font-semibold text-slate-900 dark:text-white">Double authentification (2FA)</h4>
+          </div>
+
+          <div v-if="!user?.twoFactorEnabled" class="space-y-4">
+            <p class="text-sm text-slate-600 dark:text-slate-400">
+              Ajoutez une couche de sécurité avec une application d’authentification.
+            </p>
+            <button type="button" class="btn-primary" @click="setup2FA">Activer le 2FA</button>
+          </div>
+
+          <div v-else class="space-y-4">
+            <div class="flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
+              <svg class="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+              <span class="text-sm font-medium">Le 2FA est activé</span>
+            </div>
+            <button type="button" class="btn-secondary text-rose-600 dark:text-rose-400" @click="disable2FA">
+              Désactiver le 2FA
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-col-reverse gap-3 border-t border-slate-200/80 pt-6 dark:border-slate-700 sm:flex-row sm:justify-end">
+          <button type="button" class="btn-secondary w-full sm:w-auto" @click="resetForm">Annuler</button>
+          <button type="submit" class="btn-primary w-full sm:w-auto" :disabled="isSubmitting">
+            <span v-if="isSubmitting">Enregistrement…</span>
+            <span v-else>Enregistrer</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </template>
@@ -205,6 +155,15 @@ const { showNotification } = useNotifications()
 
 const user = computed(() => authStore.user)
 const avatarInput = ref(null)
+
+const displayFirst = computed(() => user.value?.firstName || user.value?.first_name || 'User')
+const initials = computed(() => {
+  const u = user.value
+  if (!u) return '?'
+  const a = (u.firstName || u.first_name || '').charAt(0)
+  const b = (u.lastName || u.last_name || '').charAt(0)
+  return (a + b).toUpperCase() || '?'
+})
 
 const formData = ref({
   firstName: '',

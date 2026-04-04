@@ -1,101 +1,107 @@
 <template>
-  <div class="max-w-7xl mx-auto">
-    <!-- Header -->
-    <div class="bg-white rounded-lg shadow mb-6">
-      <div class="px-6 py-4 border-b border-gray-200">
-        <h1 class="text-2xl font-bold text-gray-900">Audit Logs</h1>
+  <div class="mx-auto max-w-7xl animate-fade-in-up">
+    <div class="table-shell mb-6">
+      <div class="panel-header bg-gradient-to-r from-white to-slate-50/80 dark:from-slate-900 dark:to-slate-900">
+        <div class="flex items-start gap-3">
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white dark:bg-brand-600">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h1 class="text-xl font-bold text-slate-900 dark:text-white sm:text-2xl">Journal d’audit</h1>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Historique des actions sur la plateforme</p>
+          </div>
+        </div>
       </div>
-      
-      <!-- Filters -->
-      <div class="px-6 py-4 border-b border-gray-200">
-        <div class="flex flex-wrap gap-4">
-          <input
-            v-model="searchQuery"
-            type="text"
-            placeholder="Search logs..."
-            class="px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-          >
-          <select
-            v-model="actionFilter"
-            class="px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="">All Actions</option>
-            <option value="login">Login</option>
-            <option value="logout">Logout</option>
-            <option value="create">Create</option>
-            <option value="update">Update</option>
-            <option value="delete">Delete</option>
+
+      <div class="border-b border-slate-200/80 px-4 py-4 dark:border-slate-700 sm:px-6">
+        <div class="flex flex-wrap gap-3">
+          <input v-model="searchQuery" type="search" placeholder="Rechercher…" class="input-field min-w-[200px] flex-1 !py-2.5">
+          <select v-model="actionFilter" class="input-field max-w-[180px] !py-2.5">
+            <option value="">Toutes les actions</option>
+            <option value="login">Connexion</option>
+            <option value="logout">Déconnexion</option>
+            <option value="create">Création</option>
+            <option value="update">Mise à jour</option>
+            <option value="delete">Suppression</option>
           </select>
-          <input
-            v-model="dateFilter"
-            type="date"
-            class="px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
-          >
+          <input v-model="dateFilter" type="date" class="input-field max-w-[180px] !py-2.5">
         </div>
       </div>
     </div>
 
-    <!-- Audit Table -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="table-shell overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+          <thead class="bg-slate-50/90 dark:bg-slate-800/50">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Timestamp
+              <th class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Horodatage
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                User
+              <th class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Utilisateur
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Action
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Resource
+              <th class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Ressource
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                IP Address
+              <th class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                IP
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Details
+              <th class="px-6 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Détails
               </th>
             </tr>
           </thead>
-          <tbody class="bg-white divide-y divide-gray-200">
-            <tr v-for="log in filteredLogs" :key="log.id" class="hover:bg-gray-50">
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+          <tbody class="divide-y divide-slate-100 bg-white dark:divide-slate-800 dark:bg-slate-900/40">
+            <tr
+              v-for="log in filteredLogs"
+              :key="log.id"
+              class="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+            >
+              <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                 {{ formatDateTime(log.created_at) }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <div class="flex items-center">
-                  <div class="w-8 h-8 rounded-full bg-indigo-500 flex items-center justify-center">
-                    <span class="text-white text-xs font-medium">
-                      {{ log.user?.first_name?.charAt(0) }}{{ log.user?.last_name?.charAt(0) }}
-                    </span>
+              <td class="whitespace-nowrap px-6 py-4">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-700 text-xs font-bold text-white"
+                  >
+                    {{ log.user?.first_name?.charAt(0) }}{{ log.user?.last_name?.charAt(0) }}
                   </div>
-                  <div class="ml-3">
-                    <div class="text-sm font-medium text-gray-900">
+                  <div class="min-w-0">
+                    <div class="truncate text-sm font-medium text-slate-900 dark:text-white">
                       {{ log.user?.first_name }} {{ log.user?.last_name }}
                     </div>
-                    <div class="text-sm text-gray-500">{{ log.user?.email }}</div>
+                    <div class="truncate text-sm text-slate-500 dark:text-slate-400">{{ log.user?.email }}</div>
                   </div>
                 </div>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap">
-                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize"
-                  :class="getActionClass(log.action)">
+              <td class="whitespace-nowrap px-6 py-4">
+                <span
+                  class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize"
+                  :class="getActionClass(log.action)"
+                >
                   {{ log.action }}
                 </span>
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ log.entity_type || '-' }}
+              <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-900 dark:text-slate-200">
+                {{ log.entity_type || '—' }}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td class="whitespace-nowrap px-6 py-4 font-mono text-sm text-slate-500 dark:text-slate-400">
                 {{ log.ip_address }}
               </td>
-              <td class="px-6 py-4 text-sm text-gray-500">
+              <td class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400">
                 <div class="max-w-xs truncate" :title="log.details">
-                  {{ log.details || '-' }}
+                  {{ log.details || '—' }}
                 </div>
               </td>
             </tr>
@@ -128,13 +134,13 @@ const filteredLogs = computed(() => {
 
 const getActionClass = (action) => {
   const classes = {
-    login: 'bg-green-100 text-green-800',
-    logout: 'bg-gray-100 text-gray-800',
-    create: 'bg-blue-100 text-blue-800',
-    update: 'bg-yellow-100 text-yellow-800',
-    delete: 'bg-red-100 text-red-800'
+    login: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300',
+    logout: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    create: 'bg-brand-100 text-brand-800 dark:bg-brand-950/50 dark:text-brand-300',
+    update: 'bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-300',
+    delete: 'bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300',
   }
-  return classes[action] || 'bg-gray-100 text-gray-800'
+  return classes[action] || 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
 }
 
 const formatDateTime = (dateString) => {
