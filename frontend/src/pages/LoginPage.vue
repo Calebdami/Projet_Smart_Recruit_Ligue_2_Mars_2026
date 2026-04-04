@@ -84,7 +84,7 @@
           <input
             v-model="formData.rememberMe"
             type="checkbox"
-            class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800"
+            class="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-600 dark:bg-black"
           >
           <span class="text-sm font-medium text-slate-600 dark:text-slate-400">Se souvenir de moi</span>
         </label>
@@ -162,10 +162,12 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUI } from '@/composables/useUI'
+import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const { notify } = useUI()
+const { login: authLogin } = useAuth()
 
 const showPassword = ref(false)
 const loading = ref(false)
@@ -192,9 +194,7 @@ const handleLogin = async () => {
         rememberMe: formData.rememberMe,
       })
     } else {
-      const { useAuth } = await import('@/composables/useAuth')
-      const { login } = useAuth()
-      const result = await login({
+      const result = await authLogin({
         email: formData.email,
         password: formData.password,
       })

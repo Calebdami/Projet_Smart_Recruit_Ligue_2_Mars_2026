@@ -1,5 +1,5 @@
 <template>
-  <div class="relative min-h-screen overflow-hidden bg-white dark:bg-slate-950">
+  <div class="relative min-h-screen overflow-hidden bg-white dark:bg-black">
     <div
       class="pointer-events-none absolute inset-0 opacity-40 dark:opacity-25"
       aria-hidden="true"
@@ -82,7 +82,7 @@
       </div>
 
       <div
-        class="flex w-full flex-col justify-center bg-gradient-to-b from-slate-50 to-white px-4 py-12 dark:from-slate-950 dark:to-slate-900 lg:w-1/2 lg:py-0 xl:px-12"
+        class="flex w-full flex-col justify-center bg-gradient-to-b from-slate-50 to-white px-4 py-12 dark:from-black dark:to-black lg:w-1/2 lg:py-0 xl:px-12"
       >
         <div class="mx-auto w-full max-w-md animate-fade-in-up">
           <div class="mb-8 text-center lg:hidden">

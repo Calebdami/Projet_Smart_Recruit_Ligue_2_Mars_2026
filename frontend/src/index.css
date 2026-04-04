@@ -24,33 +24,32 @@
   }
 
   .dark .page-shell {
-    background-image: linear-gradient(to bottom right, rgb(2 6 23), rgb(15 23 42), rgb(2 6 23));
+    background-image: linear-gradient(to bottom right, rgb(0 0 0), rgb(0 0 0), rgb(0 0 0));
     @apply text-slate-100;
   }
 
-  /* box-shadow défini en CSS pur : @apply ne résout pas toujours theme.extend.boxShadow (shadow-soft, etc.) */
   .card-elevated {
     @apply rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-sm transition-all duration-300;
-    @apply dark:border-slate-700/80 dark:bg-slate-900/80;
+    @apply dark:border-slate-700/80 dark:bg-black/80;
     box-shadow:
       0 2px 15px -3px rgba(15, 23, 42, 0.07),
       0 10px 20px -2px rgba(15, 23, 42, 0.04);
   }
 
   .dark .card-elevated {
-    box-shadow: none;
+    box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2);
   }
 
   .card-elevated-hover {
     @apply rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-sm transition-all duration-300;
-    @apply dark:border-slate-700/80 dark:bg-slate-900/80;
+    @apply dark:border-slate-700/80 dark:bg-black/80;
     box-shadow:
       0 2px 15px -3px rgba(15, 23, 42, 0.07),
       0 10px 20px -2px rgba(15, 23, 42, 0.04);
   }
 
   .dark .card-elevated-hover {
-    box-shadow: none;
+    box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2);
   }
 
   .card-elevated-hover:hover {
@@ -147,14 +146,14 @@
   }
 
   .table-shell {
-    @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-slate-700/80 dark:bg-slate-900/60;
+    @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white dark:border-slate-700/80 dark:bg-black/80;
     box-shadow:
       0 2px 15px -3px rgba(15, 23, 42, 0.07),
       0 10px 20px -2px rgba(15, 23, 42, 0.04);
   }
 
   .dark .table-shell {
-    box-shadow: none;
+    box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 10px 20px -2px rgba(0, 0, 0, 0.2);
   }
 
   .stagger-children > * {
@@ -202,6 +201,8 @@
     background-image:
       radial-gradient(at 40% 20%, rgba(99, 102, 241, 0.2) 0px, transparent 50%),
       radial-gradient(at 80% 0%, rgba(20, 184, 166, 0.15) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, rgba(129, 140, 248, 0.12) 0px, transparent 45%);
+      radial-gradient(at 0% 50%, rgba(129, 140, 248, 0.12) 0px, transparent 45%),
+      radial-gradient(at 100% 100%, rgba(0, 0, 0, 1) 0px, transparent 70%);
+    background-color: black;
   }
 }

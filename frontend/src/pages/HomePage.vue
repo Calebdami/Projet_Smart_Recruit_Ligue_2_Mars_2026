@@ -45,7 +45,7 @@
         <router-link
           v-if="$can('view_users')"
           to="/users"
-          class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-brand-700 to-brand-800 p-8 text-white shadow-xl shadow-brand-900/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow"
+          class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 to-slate-950 p-8 text-white shadow-xl ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-0.5 dark:from-slate-700 dark:to-slate-900"
         >
           <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.06\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-80" />
           <div class="relative">
@@ -73,7 +73,7 @@
         <router-link
           v-if="$can('view_audit_logs')"
           to="/audit"
-          class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-accent-600 to-accent-800 p-8 text-white shadow-xl shadow-accent-900/25 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-glow-accent"
+          class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 to-slate-950 p-8 text-white shadow-xl ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-0.5 dark:from-slate-700 dark:to-slate-900"
         >
           <div class="relative">
             <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
@@ -252,7 +252,7 @@ const stats = [
     value: '1 234',
     change: '+12 %',
     icon: UsersSvg,
-    bgColor: 'bg-gradient-to-br from-brand-500 to-brand-700',
+    bgColor: 'bg-gradient-to-br from-violet-500 to-purple-700',
     glow: 'bg-brand-500',
   },
   {
@@ -260,7 +260,7 @@ const stats = [
     value: '89',
     change: '+8 %',
     icon: BriefcaseSvg,
-    bgColor: 'bg-gradient-to-br from-accent-500 to-accent-700',
+    bgColor: 'bg-gradient-to-br from-blue-500 to-indigo-700',
     glow: 'bg-accent-500',
   },
   {
@@ -268,7 +268,7 @@ const stats = [
     value: '456',
     change: '+23 %',
     icon: ClipboardSvg,
-    bgColor: 'bg-gradient-to-br from-violet-500 to-purple-700',
+    bgColor: 'bg-gradient-to-br from-emerald-500 to-teal-700',
     glow: 'bg-violet-500',
   },
   {
@@ -276,7 +276,7 @@ const stats = [
     value: '23',
     change: '+5 %',
     icon: ChartSvg,
-    bgColor: 'bg-gradient-to-br from-amber-500 to-orange-600',
+    bgColor: 'bg-gradient-to-br from-rose-500 to-red-700',
     glow: 'bg-amber-500',
   },
 ]
@@ -306,13 +306,13 @@ const features = [
     title: 'Rapide et fluide',
     desc: 'Réduisez le time-to-hire avec des flux clairs et des relances ciblées.',
     icon: BoltSvg,
-    iconBg: 'bg-gradient-to-br from-brand-500 to-brand-600',
+    iconBg: 'bg-gradient-to-br from-slate-600 to-slate-800',
   },
   {
     title: 'Sécurisé',
     desc: 'Authentification renforcée, journaux d’audit et conformité RGPD.',
     icon: LockSvg,
-    iconBg: 'bg-gradient-to-br from-accent-500 to-accent-600',
+    iconBg: 'bg-gradient-to-br from-slate-600 to-slate-800',
   },
   {
     title: 'Pilotage par la donnée',

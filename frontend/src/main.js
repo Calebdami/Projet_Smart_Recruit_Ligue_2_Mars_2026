@@ -82,9 +82,8 @@ app.config.globalProperties.$can = (permission) => {
 app.use(pinia)
 app.use(router)
 
-// Initialize auth
-import { useAuth } from './composables/useAuth'
-const { initializeAuth } = useAuth()
-initializeAuth()
-
 app.mount('#app')
+
+import { useAuthStore } from './stores/auth'
+const authStore = useAuthStore()
+authStore.initializeFromStorage()

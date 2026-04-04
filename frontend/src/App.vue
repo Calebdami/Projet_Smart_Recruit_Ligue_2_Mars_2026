@@ -1,7 +1,7 @@
 <template>
   <div
     id="app"
-    class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-accent-50/30 text-slate-900 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 dark:text-slate-100 mesh-bg"
+    class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-accent-50/30 text-slate-900 transition-colors duration-300 dark:from-black dark:via-black dark:to-black dark:text-slate-100 mesh-bg"
   >
     <ConfirmModal
       :show="ui.confirmModal.show"

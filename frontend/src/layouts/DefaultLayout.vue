@@ -1,14 +1,14 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-accent-50/20 transition-colors duration-300 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 mesh-bg">
+  <div class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-accent-50/20 transition-colors duration-300 dark:from-black dark:via-black dark:to-black mesh-bg">
     <nav
-      class="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 shadow-sm backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-slate-900/85"
+      class="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 shadow-sm backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-black/85"
     >
       <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <router-link to="/" class="group flex items-center gap-2.5">
           <div
             class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-accent-600 shadow-md transition-all duration-300 group-hover:scale-105 group-hover:shadow-glow"
           >
-            <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-5 w-5 text-white" fill="blue" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -50,14 +50,14 @@
               @click="toggleProfileMenu"
             >
               <div
-                class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-600 text-xs font-bold text-white"
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-600 text-xs font-bold text-black"
               >
                 {{ initials }}
               </div>
               <svg
                 class="h-4 w-4 text-slate-400 transition-transform"
                 :class="{ 'rotate-180': showProfileMenu }"
-                fill="none"
+                fill=""
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >

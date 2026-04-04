@@ -2,7 +2,7 @@
   <button
     type="button"
     :aria-label="isDark ? 'Passer en mode clair' : 'Passer en mode sombre'"
-    class="theme-toggle relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white/90 text-slate-600 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-brand-300 hover:text-brand-600 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-slate-600 dark:bg-slate-800/90 dark:text-slate-300 dark:hover:border-accent-500/50 dark:hover:text-accent-300 dark:focus-visible:ring-offset-slate-900"
+    class="theme-toggle relative inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200/80 bg-white/90 text-slate-600 shadow-sm backdrop-blur-sm transition-all duration-300 hover:border-brand-300 hover:text-brand-600 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 dark:border-slate-600 dark:bg-black/90 dark:text-slate-300 dark:hover:border-accent-500/50 dark:hover:text-accent-300 dark:focus-visible:ring-offset-black"
     @click="toggleTheme"
   >
     <transition

@@ -102,7 +102,7 @@
           v-model="formData.agreeTerms"
           type="checkbox"
           required
-          class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-600 dark:bg-slate-800"
+          class="mt-1 h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500 dark:border-slate-600 dark:bg-black"
         >
         <span class="text-xs font-medium leading-relaxed text-slate-600 dark:text-slate-400">
           J’accepte les
@@ -168,10 +168,12 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUI } from '@/composables/useUI'
+import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const { notify } = useUI()
+const { register: authRegister } = useAuth()
 
 const showPassword = ref(false)
 const loading = ref(false)
@@ -208,9 +210,7 @@ const handleRegister = async () => {
         password: formData.password,
       })
     } else {
-      const { useAuth } = await import('@/composables/useAuth')
-      const { register } = useAuth()
-      const result = await register({
+      const result = await authRegister({
         first_name: formData.firstName,
         last_name: formData.lastName,
         email: formData.email,

@@ -1,6 +1,6 @@
 <template>
   <aside
-    class="fixed left-0 top-0 z-50 flex h-full w-72 flex-col border-r border-slate-800/80 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white shadow-2xl"
+    class="fixed left-0 top-0 z-50 flex h-full w-72 flex-col border-r border-slate-800/80 bg-gradient-to-b from-black via-black to-black text-white shadow-2xl"
   >
     <div class="border-b border-slate-800/80 px-5 py-7">
       <router-link to="/" class="group flex items-center gap-3">
