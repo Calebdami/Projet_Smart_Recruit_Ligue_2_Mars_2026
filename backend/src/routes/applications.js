@@ -1,43 +1,52 @@
-import { Router } from 'express';
-import { ApplicationsController } from '../controllers/applications.js';
+import express from 'express';
+import { ApplicationController } from '../controllers/applications.js';
 import { authenticate, authorize } from '../middleware/auth.js';
+import { body } from 'express-validator';
+import { validateRequest } from '../middleware/validation.js';
 
-const router = Router();
+const router = express.Router();
 
-/**
- * POST /api/v1/applications
- * Candidat postule à une offre
- * Accès : candidat uniquement
- */
-router.post(
-  '/',
+// Validation rules
+const applicationValidation = [
+  body('job_id').isUUID().withMessage('Job ID is required'),
+  body('cover_letter').optional().isString(),
+  body('screening_answers').optional().isObject(),
+];
+
+const updateStatusValidation = [
+  body('status').isIn(['new', 'reviewing', 'screening', 'interview', 'technical_test', 'offer', 'rejected', 'hired', 'withdrawn']).withMessage('Invalid status'),
+  body('next_step').optional().isString(),
+  body('notes').optional().isArray(),
+];
+
+// Candidate routes
+router.post('/apply',
   authenticate,
   authorize(['candidate']),
-  ApplicationsController.apply
+  applicationValidation,
+  validateRequest,
+  ApplicationController.apply
 );
 
-/**
- * PATCH /api/v1/applications/:id/status
- * Recruteur change le statut (Drag & Drop du board)
- * Accès : recruteur et admin
- */
-router.patch(
-  '/:id/status',
+router.get('/my-applications',
   authenticate,
-  authorize(['recruiter', 'admin']),
-  ApplicationsController.updateStatus
+  authorize(['candidate']),
+  ApplicationController.getMyApplications
 );
 
-/**
- * GET /api/v1/applications/job/:id
- * Récupérer toutes les candidatures d'une offre groupées par statut
- * Accès : recruteur et admin
- */
-router.get(
-  '/job/:id',
+// Recruiter/Admin routes
+router.get('/job/:jobId',
   authenticate,
   authorize(['recruiter', 'admin']),
-  ApplicationsController.getByJob
+  ApplicationController.getJobApplications
+);
+
+router.patch('/:id/status',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  updateStatusValidation,
+  validateRequest,
+  ApplicationController.updateStatus
 );
 
 export default router;

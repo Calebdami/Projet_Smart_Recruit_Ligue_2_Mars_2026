@@ -1,36 +1,40 @@
-/**
- * Service Applications
- * Toutes les appels API liés aux candidatures
- */
-import api from './api.js';
+import api from '@/config/api'
 
-const ApplicationsService = {
-  /**
-   * Postuler à une offre (candidat)
-   * @param {string} job_id
-   * @param {string} cover_letter
-   */
-  apply(job_id, cover_letter = '') {
-    return api.post('/applications', { job_id, cover_letter });
-  },
+class ApplicationsService {
+  async getApplications(params = {}) {
+    const response = await api.get('/applications', { params })
+    return response.data
+  }
 
-  /**
-   * Changer le statut d'une candidature (recruteur) — Drag & Drop
-   * @param {string} id - ID de la candidature
-   * @param {string} status - Nouveau statut
-   * @param {string} rejection_reason - Raison du rejet (optionnel)
-   */
-  updateStatus(id, status, rejection_reason = '') {
-    return api.patch(`/applications/${id}/status`, { status, rejection_reason });
-  },
+  async getApplication(id) {
+    const response = await api.get(`/applications/${id}`)
+    return response.data
+  }
 
-  /**
-   * Récupérer toutes les candidatures d'une offre groupées par statut
-   * @param {string} job_id - ID de l'offre
-   */
-  getByJob(job_id) {
-    return api.get(`/applications/job/${job_id}`);
-  },
-};
+  async createApplication(data) {
+    const response = await api.post('/applications', data)
+    return response.data
+  }
 
-export default ApplicationsService;
+  async updateApplicationStatus(id, status, notes = '') {
+    const response = await api.patch(`/applications/${id}/status`, { status, notes })
+    return response.data
+  }
+
+  async assignRecruiter(id, recruiterId) {
+    const response = await api.patch(`/applications/${id}/assign`, { recruiter_id: recruiterId })
+    return response.data
+  }
+
+  async addNote(id, note) {
+    const response = await api.post(`/applications/${id}/notes`, { note })
+    return response.data
+  }
+
+  async scheduleInterview(id, data) {
+    const response = await api.post(`/applications/${id}/interviews`, data)
+    return response.data
+  }
+}
+
+export default new ApplicationsService()

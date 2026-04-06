@@ -92,9 +92,6 @@ const authorize = (roles) => {
   };
 };
 
-// Alias for authorize - more readable name
-const requireRole = authorize;
-
 // Resource ownership middleware
 const checkOwnership = async (req, res, next) => {
   try {
@@ -392,7 +389,6 @@ export {
   authenticate,
   optionalAuthenticate,
   authorize,
-  requireRole,
   checkOwnership,
   refreshToken,
   requireTwoFactor,

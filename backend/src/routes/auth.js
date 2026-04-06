@@ -113,9 +113,4 @@ router.post('/reset-password',
   AuthController.resetPassword
 );
 
-router.get('/me',
-  authenticate,
-  AuthController.getMe
-);
-
 export default router;

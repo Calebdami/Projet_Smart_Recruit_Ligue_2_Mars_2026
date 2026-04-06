@@ -1,66 +1,146 @@
-/**
- * Store Pinia — Applications
- * Gère l'état du board de candidatures
- */
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import ApplicationsService from '../services/applications.service.js';
+import { defineStore } from 'pinia'
+import { ref, computed } from 'vue'
+import applicationsService from '@/services/applications.service'
 
 export const useApplicationsStore = defineStore('applications', () => {
-  // Le board groupé par statut (format retourné par l'API)
-  const board = ref({
-    new: [],
-    reviewing: [],
-    interview: [],
-    offer: [],
-    hired: [],
-    rejected: [],
-  });
+  // State
+  const applications = ref([])
+  const currentApplication = ref(null)
+  const loading = ref(false)
+  const error = ref(null)
+  const filters = ref({
+    search: '',
+    status: '',
+    job_id: '',
+    recruiter_id: ''
+  })
 
-  const loading = ref(false);
-  const error = ref(null);
-  const currentJobId = ref(null);
+  // Getters
+  const allApplications = computed(() => applications.value)
+  const applicationsCount = computed(() => applications.value.length)
+  const newApplications = computed(() => applications.value.filter(a => a.status === 'new'))
+  const inProcessApplications = computed(() => applications.value.filter(a => ['reviewing', 'interview', 'offer'].includes(a.status)))
+  const hiredApplications = computed(() => applications.value.filter(a => a.status === 'hired'))
+  const isLoading = computed(() => loading.value)
 
-  /**
-   * Charger les candidatures d'une offre
-   */
-  async function fetchBoard(job_id) {
-    loading.value = true;
-    error.value = null;
-    currentJobId.value = job_id;
-
+  // Actions
+  const fetchApplications = async (params = {}) => {
+    loading.value = true
+    error.value = null
     try {
-      const { data } = await ApplicationsService.getByJob(job_id);
-      board.value = data.data.board;
+      const response = await applicationsService.getApplications({ ...filters.value, ...params })
+      applications.value = response.data?.applications || response.data || []
+      return { success: true, applications: applications.value }
     } catch (err) {
-      error.value = err.response?.data?.message || 'Erreur lors du chargement';
+      error.value = err.response?.data?.message || err.message || 'Failed to fetch applications'
+      return { success: false, error: error.value }
     } finally {
-      loading.value = false;
+      loading.value = false
     }
   }
 
-  /**
-   * Mettre à jour le statut localement (optimistic update)
-   * puis envoyer au backend
-   */
-  async function moveApplication(application, fromStatus, toStatus) {
-    // Mise à jour optimiste : on bouge la carte immédiatement
-    board.value[fromStatus] = board.value[fromStatus].filter(
-      (a) => a.id !== application.id
-    );
-    board.value[toStatus].push({ ...application, status: toStatus });
-
+  const fetchApplication = async (id) => {
+    loading.value = true
+    error.value = null
     try {
-      await ApplicationsService.updateStatus(application.id, toStatus);
+      const response = await applicationsService.getApplication(id)
+      currentApplication.value = response.data?.application || response.data
+      return { success: true, application: currentApplication.value }
     } catch (err) {
-      // En cas d'erreur, on annule le mouvement
-      board.value[toStatus] = board.value[toStatus].filter(
-        (a) => a.id !== application.id
-      );
-      board.value[fromStatus].push(application);
-      error.value = 'Impossible de mettre à jour le statut';
+      error.value = err.response?.data?.message || err.message || 'Failed to fetch application'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
     }
   }
 
-  return { board, loading, error, currentJobId, fetchBoard, moveApplication };
-});
+  const updateStatus = async (id, status, notes = '') => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.updateApplicationStatus(id, status, notes)
+      const updated = response.data?.application || response.data
+      const index = applications.value.findIndex(a => a.id === id)
+      if (index !== -1) {
+        applications.value[index] = { ...applications.value[index], ...updated }
+      }
+      if (currentApplication.value?.id === id) {
+        currentApplication.value = { ...currentApplication.value, ...updated }
+      }
+      return { success: true, application: updated }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to update status'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const assignRecruiter = async (id, recruiterId) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.assignRecruiter(id, recruiterId)
+      const updated = response.data?.application || response.data
+      const index = applications.value.findIndex(a => a.id === id)
+      if (index !== -1) {
+        applications.value[index] = { ...applications.value[index], ...updated }
+      }
+      if (currentApplication.value?.id === id) {
+        currentApplication.value = { ...currentApplication.value, ...updated }
+      }
+      return { success: true, application: updated }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to assign recruiter'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const addNote = async (id, note) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.addNote(id, note)
+      return { success: true, data: response.data }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to add note'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const setFilters = (newFilters) => {
+    filters.value = { ...filters.value, ...newFilters }
+  }
+
+  const clearError = () => {
+    error.value = null
+  }
+
+  return {
+    // State
+    applications,
+    currentApplication,
+    loading,
+    error,
+    filters,
+    // Getters
+    allApplications,
+    applicationsCount,
+    newApplications,
+    inProcessApplications,
+    hiredApplications,
+    isLoading,
+    // Actions
+    fetchApplications,
+    fetchApplication,
+    updateStatus,
+    assignRecruiter,
+    addNote,
+    setFilters,
+    clearError
+  }
+})

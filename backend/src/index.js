@@ -1,3 +1,7 @@
+import dotenv from 'dotenv';
+
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -10,11 +14,15 @@ import { initCronJobs } from './utils/cron.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
-import auditRoutes from './routes/audit.js';
+import userRoutes from './routes/users.js';
 import candidateRoutes from './routes/candidates.js';
 import jobRoutes from './routes/jobs.js';
 import applicationRoutes from './routes/applications.js';
 import webinarRoutes from './routes/webinars.js';
+import analyticsRoutes from './routes/analytics.js';
+import auditRoutes from './routes/audit.js';
+import notificationsRoutes from './routes/notifications.js';
+import settingsRoutes from './routes/settings.js';
 
 // Validate configuration
 try {
@@ -91,11 +99,15 @@ app.use(`/api/${config.apiVersion}`, apiRouter);
 
 // Mount routes
 apiRouter.use('/auth', authRoutes);
-apiRouter.use('/audit', auditRoutes);
+apiRouter.use('/users', userRoutes);
 apiRouter.use('/candidates', candidateRoutes);
 apiRouter.use('/jobs', jobRoutes);
+apiRouter.use('/notifications', notificationsRoutes);
+apiRouter.use('/settings', settingsRoutes);
 apiRouter.use('/applications', applicationRoutes);
 apiRouter.use('/webinars', webinarRoutes);
+apiRouter.use('/analytics', analyticsRoutes);
+apiRouter.use('/audit', auditRoutes);
 
 // Initialize background jobs
 initCronJobs();
@@ -110,11 +122,12 @@ apiRouter.get('/', (req, res) => {
       description: 'Écosystème de Recrutement Prédictif & Engagement Candidat',
       endpoints: {
         auth: `/api/${config.apiVersion}/auth`,
-        audit: `/api/${config.apiVersion}/audit`,
         candidates: `/api/${config.apiVersion}/candidates`,
         jobs: `/api/${config.apiVersion}/jobs`,
         applications: `/api/${config.apiVersion}/applications`,
         webinars: `/api/${config.apiVersion}/webinars`,
+        analytics: `/api/${config.apiVersion}/analytics`,
+        audit: `/api/${config.apiVersion}/audit`,
       },
       documentation: `/api/${config.apiVersion}/docs`,
       health: '/health',
@@ -188,16 +201,16 @@ const startServer = async () => {
   try {
     // Initialize Redis connection
     await redisClient.connect();
-    console.log('Redis connected successfully');
+    console.log('Bingo !! Connection à Redis réussie !');
     
     // Test database connection
     await db.raw('SELECT 1');
-    console.log('Database connected successfully');
+    console.log('Bingo !! Connection à la bade de donnée réussie !');
     
     // Start HTTP server
     app.listen(config.port, () => {
-      console.log(`\n🚀 SmartRecruit API Server Started`);
-      console.log(`🌐 Server running on: http://localhost:${config.port}`);
+      console.log(`\nSmartRecruit`);
+      console.log(`Notre Serveur tourne sur : http://localhost:${config.port}`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

@@ -1,13 +1,17 @@
 import { createClient } from 'redis';
 
 // Redis client configuration
+const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
 const redisConfig = {
+    url: redisUrl,
     socket: {
-        host: process.env.REDIS_HOST || 'localhost',
-        port: parseInt(process.env.REDIS_PORT || '6379', 10),
-    },
-    password: process.env.REDIS_PASSWORD || undefined,
-    database: parseInt(process.env.REDIS_DB || '0', 10),
+        tls: redisUrl?.startsWith('rediss://'),
+        rejectUnauthorized: false,
+        reconnectStrategy: (retries) => {
+            if (retries > 4) return new Error('Redis connection failed after 4 attempts');
+            return Math.min(retries * 500, 5000);
+        }
+    }
 };
 
 // Create and export Redis client
@@ -26,7 +30,7 @@ const checkRedisHealth = async () => {
 
 // Redis connection event handlers
 redisClient.on('connect', () => { console.log('Connected to Redis') });
-redisClient.on('error', (error) => { console.error('Redis connection error:', error) });
+redisClient.on('error', (err) => { if (err.message.includes('WRONGPASS')) { console.error('❌ Erreur de mot de passe Redis ! Vérifie ton fichier .env'); } else { console.error('Core Redis Error:', err.message); }});
 redisClient.on('end', () => { console.log('Redis connection ended') });
 
 // Graceful shutdown

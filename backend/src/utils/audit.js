@@ -1,43 +1,62 @@
 import { db } from '../config/database.js';
 
-/**
- * Enregistre une action dans la table audit_trail
- * @param {Object} params
- * @param {string} params.action - L'action effectuée (create, update, delete, login...)
- * @param {string} params.entity_type - Le type d'entité concernée (user, application...)
- * @param {string} params.entity_id - L'id de l'entité concernée
- * @param {string} params.user_id - L'id de l'utilisateur qui a effectué l'action
- * @param {string} [params.ip_address] - L'adresse IP
- * @param {string} [params.user_agent] - Le user agent
- * @param {Object} [params.old_values] - Les anciennes valeurs (pour les updates)
- * @param {Object} [params.new_values] - Les nouvelles valeurs (pour les updates)
- */
-const auditLog = async ({
-  action,
-  entity_type,
-  entity_id,
-  user_id,
-  ip_address = null,
-  user_agent = null,
-  old_values = null,
-  new_values = null,
-}) => {
+const auditLog = async (data) => {
   try {
     await db('audit_trail').insert({
-      action,
-      entity_type,
-      entity_id,
-      user_id,
-      ip_address,
-      user_agent,
-      old_values: old_values ? JSON.stringify(old_values) : null,
-      new_values: new_values ? JSON.stringify(new_values) : null,
-      created_at: new Date(),
+      ...data,
+      old_values: data.old_values ? JSON.stringify(data.old_values) : null,
+      new_values: data.new_values ? JSON.stringify(data.new_values) : null,
+      metadata: JSON.stringify(data.metadata || {}),
     });
   } catch (error) {
-    // On ne bloque jamais l'action principale si l'audit échoue
-    console.error('Audit log failed (non-blocking):', error.message);
+    console.error('Failed to create audit log:', error);
+    // Don't throw error to avoid breaking main flow
   }
 };
 
-export { auditLog };
+const getAuditLogs = async (filters = {}) => {
+  try {
+    let query = db('audit_trail').orderBy('created_at', 'desc');
+
+    if (filters.entity_type) {
+      query = query.where('entity_type', filters.entity_type);
+    }
+
+    if (filters.entity_id) {
+      query = query.where('entity_id', filters.entity_id);
+    }
+
+    if (filters.user_id) {
+      query = query.where('user_id', filters.user_id);
+    }
+
+    if (filters.action) {
+      query = query.where('action', filters.action);
+    }
+
+    if (filters.limit) {
+      query = query.limit(filters.limit);
+    }
+
+    if (filters.offset) {
+      query = query.offset(filters.offset);
+    }
+
+    const logs = await query.select('*');
+
+    return logs.map(log => ({
+      ...log,
+      old_values: log.old_values ? JSON.parse(log.old_values) : null,
+      new_values: log.new_values ? JSON.parse(log.new_values) : null,
+      metadata: JSON.parse(log.metadata),
+    }));
+  } catch (error) {
+    console.error('Failed to fetch audit logs:', error);
+    return [];
+  }
+};
+
+export {
+  auditLog,
+  getAuditLogs,
+};

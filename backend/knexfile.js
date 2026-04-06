@@ -1,11 +1,13 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
+import 'dotenv/config';
 
 export default {
   development: {
     client: 'postgresql',
-    connection: {
+    connection: process.env.DB_URL ?
+    {
+      connectionString:process.env.DB_URL ,
+      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false } :
+    {
       host: process.env.DB_HOST || 'localhost',
       port: process.env.DB_PORT || 5432,
       database: process.env.DB_NAME || 'smartrecruit_db',

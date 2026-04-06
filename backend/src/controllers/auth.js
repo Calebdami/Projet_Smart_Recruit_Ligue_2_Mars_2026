@@ -9,8 +9,7 @@ import {
     generateEmailVerificationToken,
     generatePasswordResetToken,
     isPasswordResetTokenValid,
-    validateCreateUserData,
-    validatePassword
+    validateCreateUserData
 } from '../utils/auth.js';
 import { auditLog } from '../utils/audit.js';
 import { sendEmail } from '../utils/email.js';
@@ -609,18 +608,22 @@ class AuthController {
             return;
         }
 
+        // Validate new password
+        const { validatePassword } = require('../utils/auth');
         const passwordValidation = validatePassword(password);
         if (!passwordValidation.isValid) {
             res.status(400).json({
-                success: false,
-                error: 'Invalid password',
-                errors: { password: passwordValidation.errors },
+            success: false,
+            error: 'Invalid password',
+            errors: { password: passwordValidation.errors },
             });
             return;
         }
 
+        // Hash new password
         const passwordHash = await hashPassword(password);
 
+        // Update user password and clear reset token
         await db('users')
             .where('id', user.id)
             .update({
@@ -650,59 +653,6 @@ class AuthController {
             error: 'Password reset failed',
             message: 'An error occurred while resetting password',
         });
-        }
-    }
-
-    // Get current user profile
-    static async getMe(req, res) {
-        try {
-            if (!req.user) {
-                res.status(401).json({
-                    success: false,
-                    error: 'Authentication required',
-                    message: 'You must be authenticated to access this endpoint',
-                });
-                return;
-            }
-
-            // Get user from database
-            const user = await db('users')
-                .where('id', req.user.sub)
-                .where('is_active', true)
-                .first();
-
-            if (!user) {
-                res.status(404).json({
-                    success: false,
-                    error: 'User not found',
-                    message: 'Authenticated user not found in database',
-                });
-                return;
-            }
-
-            // Remove sensitive data
-            const { 
-                password_hash, 
-                email_verification_token, 
-                password_reset_token, 
-                two_factor_secret,
-                ...userProfile 
-            } = user;
-
-            res.json({
-                success: true,
-                data: {
-                    user: userProfile,
-                },
-                message: 'User profile retrieved successfully',
-            });
-        } catch (error) {
-            console.error('Get profile error:', error);
-            res.status(500).json({
-                success: false,
-                error: 'Profile retrieval failed',
-                message: 'An error occurred while retrieving user profile',
-            });
         }
     }
 }

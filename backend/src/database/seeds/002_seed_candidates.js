@@ -1,0 +1,128 @@
+export async function seed(knex) {
+  await knex('candidates').del();
+
+  await knex('candidates').insert([
+    {
+      id: '66666666-6666-4666-8666-666666666661',
+      user_id: '44444444-4444-4444-8444-444444444444',
+      bio: 'Développeur full-stack spécialisé en Vue.js, Node.js et PostgreSQL, avec un fort intérêt pour les produits RH et les plateformes SaaS.',
+      skills: JSON.stringify([
+        { name: 'Vue.js', level: 'advanced' },
+        { name: 'Node.js', level: 'advanced' },
+        { name: 'PostgreSQL', level: 'intermediate' },
+        { name: 'Docker', level: 'intermediate' },
+      ]),
+      linkedin_url: 'https://linkedin.com/in/leo-kouassi',
+      github_url: 'https://github.com/leokouassi',
+      portfolio_url: 'https://leo-kouassi.dev',
+      resume_path: 'resumes/leo-kouassi-cv.pdf',
+      resume_original_name: 'leo-kouassi-cv.pdf',
+      resume_mime_type: 'application/pdf',
+      resume_size: 248000,
+      semantic_hash: 'semantic-hash-leo-2026',
+      location: 'Paris',
+      country: 'France',
+      experience_level: 'mid',
+      years_experience: 4,
+      expected_salary_min: 45000,
+      expected_salary_max: 55000,
+      currency: 'EUR',
+      is_available: true,
+      is_active: true,
+      education: JSON.stringify([
+        {
+          school: 'EPITECH',
+          degree: 'Master',
+          field: 'Software Engineering',
+          start_year: 2018,
+          end_year: 2023,
+        },
+      ]),
+      experience: JSON.stringify([
+        {
+          company: 'TalentSoft',
+          title: 'Full Stack Developer',
+          start_date: '2023-01-01',
+          end_date: null,
+        },
+      ]),
+      languages: JSON.stringify([
+        { name: 'Français', level: 'native' },
+        { name: 'Anglais', level: 'professional' },
+      ]),
+      certifications: JSON.stringify([
+        { name: 'AWS Cloud Practitioner', year: 2025 },
+      ]),
+      headline: 'Full Stack Developer Vue.js / Node.js',
+      current_company: 'TalentSoft',
+      current_position: 'Full Stack Developer',
+      profile_completion_at: '2026-03-15T09:30:00.000Z',
+      profile_completion_percentage: 92,
+      metadata: JSON.stringify({
+        source: 'seed',
+        favorite_domain: 'hr-tech',
+      }),
+    },
+    {
+      id: '66666666-6666-4666-8666-666666666662',
+      user_id: '55555555-5555-4555-8555-555555555555',
+      bio: 'Data analyst orientée recrutement prédictif, maîtrise du traitement de données, des tableaux de bord et du scoring candidat.',
+      skills: JSON.stringify([
+        { name: 'SQL', level: 'advanced' },
+        { name: 'Python', level: 'advanced' },
+        { name: 'Power BI', level: 'advanced' },
+        { name: 'Machine Learning', level: 'intermediate' },
+      ]),
+      linkedin_url: 'https://linkedin.com/in/nadia-fofana',
+      github_url: 'https://github.com/nadiafofana',
+      portfolio_url: 'https://nadia-analytics.dev',
+      resume_path: 'resumes/nadia-fofana-cv.pdf',
+      resume_original_name: 'nadia-fofana-cv.pdf',
+      resume_mime_type: 'application/pdf',
+      resume_size: 231000,
+      semantic_hash: 'semantic-hash-nadia-2026',
+      location: 'Lyon',
+      country: 'France',
+      experience_level: 'senior',
+      years_experience: 6,
+      expected_salary_min: 52000,
+      expected_salary_max: 65000,
+      currency: 'EUR',
+      is_available: true,
+      is_active: true,
+      education: JSON.stringify([
+        {
+          school: 'Université Lyon 2',
+          degree: 'Master',
+          field: 'Data Science',
+          start_year: 2016,
+          end_year: 2021,
+        },
+      ]),
+      experience: JSON.stringify([
+        {
+          company: 'People Insights',
+          title: 'Senior Data Analyst',
+          start_date: '2022-02-01',
+          end_date: null,
+        },
+      ]),
+      languages: JSON.stringify([
+        { name: 'Français', level: 'native' },
+        { name: 'Anglais', level: 'professional' },
+      ]),
+      certifications: JSON.stringify([
+        { name: 'Microsoft Power BI Data Analyst', year: 2024 },
+      ]),
+      headline: 'Senior Data Analyst - Recruitment Analytics',
+      current_company: 'People Insights',
+      current_position: 'Senior Data Analyst',
+      profile_completion_at: '2026-03-18T11:00:00.000Z',
+      profile_completion_percentage: 95,
+      metadata: JSON.stringify({
+        source: 'seed',
+        favorite_domain: 'analytics',
+      }),
+    },
+  ]);
+}
