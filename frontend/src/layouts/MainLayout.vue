@@ -22,7 +22,6 @@
             </div>
 
             <div class="flex flex-shrink-0 items-center gap-2 sm:gap-3">
-              <ThemeToggle />
 
               <div class="relative">
                 <div
