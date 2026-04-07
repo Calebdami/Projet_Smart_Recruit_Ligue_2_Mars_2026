@@ -41,7 +41,6 @@
               {{ link.label }}
             </router-link>
           </div>
-          <ThemeToggle />
 
           <div v-if="user" class="relative">
             <button

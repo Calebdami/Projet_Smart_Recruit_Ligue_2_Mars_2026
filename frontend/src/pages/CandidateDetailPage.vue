@@ -1,7 +1,7 @@
 <template>
   <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-      <router-link to="/applications" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+      <router-link to="/candidates" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
         ← Retour aux candidatures
       </router-link>
     </div>
@@ -16,7 +16,7 @@
           <div class="flex-1">
             <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ candidate.first_name }} {{ candidate.last_name }}</h1>
             <p class="text-slate-600 dark:text-slate-400">{{ candidate.email }}</p>
-            <p class="mt-1 text-slate-500">{{ candidate.phone }}</p>
+            <p class="mt-1 text-slate-500">{{ candidate.phone ? candidate.phone : 'Téléphone non renseigné' }}</p>
             <div class="mt-4 flex gap-2">
               <span class="rounded-full bg-brand-100 px-3 py-1 text-sm text-brand-800 dark:bg-brand-950/50 dark:text-brand-200">{{ candidate.role }}</span>
               <span v-if="candidate.is_active" class="rounded-full bg-emerald-100 px-3 py-1 text-sm text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200">Actif</span>
@@ -42,7 +42,7 @@
         <div class="card-elevated p-6">
           <h2 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Compétences</h2>
           <div v-if="candidate.skills?.length" class="flex flex-wrap gap-2">
-            <span v-for="skill in candidate.skills" :key="skill" class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-200">{{ skill }}</span>
+            <span v-for="skill in candidate.skills" :key="skill" class="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-800 dark:bg-slate-800 dark:text-slate-200">{{ Object.entries(skill).map(([key, value]) => `${key}: ${value}`).join(', ') }}</span>
           </div>
           <p v-else class="text-slate-500">Aucune compétence renseignée.</p>
         </div>

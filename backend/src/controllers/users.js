@@ -266,10 +266,11 @@ class UsersController {
             const totalCount = await countQuery.count('id as count').first();
 
             // Log users list access
+            const isUUID = (str) => /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(str);
             await auditLog({
                 action: 'list',
                 entity_type: 'user',
-                entity_id: 'all',
+                entity_id: isUUID(req.params.id) ? req.params.id : null,
                 user_id: req.user.sub,
                 metadata: { filters: req.query },
                 ip_address: req.ip,
