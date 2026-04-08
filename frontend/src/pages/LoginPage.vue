@@ -201,10 +201,9 @@ const handleLogin = async () => {
       if (!result.success) throw new Error(result.error || 'Échec de la connexion')
     }
 
-    notify('success', 'Connexion réussie.')
     setTimeout(() => router.push('/'), 600)
   } catch (error) {
-    notify('error', error.message || 'Connexion impossible.')
+    // useAuth() already displays the login error toast
   } finally {
     loading.value = false
   }

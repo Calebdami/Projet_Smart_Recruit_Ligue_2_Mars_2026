@@ -62,10 +62,11 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.resolve(__dirname, '../uploads')));
 
-// Rate limiting for all requests
+// Rate limiting for all requests (separate bucket from per-route auth limits)
 app.use(rateLimitMiddleware(
   config.rateLimit.maxRequests,
-  config.rateLimit.windowMs
+  config.rateLimit.windowMs,
+  'global'
 ));
 
 // Health check endpoint

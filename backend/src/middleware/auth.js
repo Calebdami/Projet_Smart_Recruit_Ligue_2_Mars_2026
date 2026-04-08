@@ -349,11 +349,12 @@ const requireEmailVerification = async (req, res, next) => {
 };
 
 // Rate limiting middleware
-const rateLimitMiddleware = (limit, windowMs) => {
+// bucket: separate Redis counter per logical limiter (avoids global + route sharing one key and double-counting)
+const rateLimitMiddleware = (limit, windowMs, bucket = 'default') => {
   return async (req, res, next) => {
     try {
-      const identifier = req.ip || req.connection.remoteAddress || 'unknown';
-      const key = `rate_limit:${identifier}`;
+      const ip = req.ip || req.connection.remoteAddress || 'unknown';
+      const identifier = `${bucket}:${ip}`;
 
       const isLimited = await rateLimit.isLimited(identifier, limit, windowMs);
 

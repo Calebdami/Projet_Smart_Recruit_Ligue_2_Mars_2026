@@ -50,14 +50,14 @@ const passwordResetValidation = [
 
 // Routes
 router.post('/register', 
-  rateLimitMiddleware(5, 15 * 60 * 1000), // 5 requests per 15 minutes
+  rateLimitMiddleware(5, 15 * 60 * 1000, 'auth_register'), // 5 requests per 15 minutes
   registerValidation,
   validateRequest,
   AuthController.register
 );
 
 router.post('/login',
-  rateLimitMiddleware(10, 15 * 60 * 1000), // 10 requests per 15 minutes
+  rateLimitMiddleware(10, 15 * 60 * 1000, 'auth_login'), // 10 requests per 15 minutes
   loginValidation,
   validateRequest,
   AuthController.login
@@ -69,12 +69,12 @@ router.post('/logout',
 );
 
 router.post('/refresh',
-  rateLimitMiddleware(20, 60 * 60 * 1000), // 20 requests per hour
+  rateLimitMiddleware(20, 60 * 60 * 1000, 'auth_refresh'), // 20 requests per hour
   refreshToken
 );
 
 router.post('/verify-email',
-  rateLimitMiddleware(10, 60 * 60 * 1000), // 10 requests per hour
+  rateLimitMiddleware(10, 60 * 60 * 1000, 'auth_verify_email'), // 10 requests per hour
   emailVerificationValidation,
   validateRequest,
   AuthController.verifyEmail
@@ -100,14 +100,14 @@ router.post('/disable-2fa',
 );
 
 router.post('/request-password-reset',
-  rateLimitMiddleware(3, 60 * 60 * 1000), // 3 requests per hour
+  rateLimitMiddleware(3, 60 * 60 * 1000, 'auth_request_password_reset'), // 3 requests per hour
   passwordResetRequestValidation,
   validateRequest,
   AuthController.requestPasswordReset
 );
 
 router.post('/reset-password',
-  rateLimitMiddleware(5, 60 * 60 * 1000), // 5 requests per hour
+  rateLimitMiddleware(5, 60 * 60 * 1000, 'auth_reset_password'), // 5 requests per hour
   passwordResetValidation,
   validateRequest,
   AuthController.resetPassword

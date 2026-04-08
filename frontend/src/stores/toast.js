@@ -15,6 +15,16 @@ export const useToastStore = defineStore('toast', () => {
 
   // Actions
   const addToast = (toast) => {
+    const duplicate = toasts.value.find((t) =>
+      t.type === toast.type &&
+      t.title === toast.title &&
+      t.message === toast.message &&
+      Date.now() - t.createdAt < 1500
+    )
+    if (duplicate) {
+      return duplicate.id
+    }
+
     const id = nextId.value++
     const newToast = {
       id,

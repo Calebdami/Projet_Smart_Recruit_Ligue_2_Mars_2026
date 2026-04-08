@@ -42,7 +42,9 @@ export function useWebSocket() {
       }
 
       socket.value.onclose = (event) => {
-        console.log('WebSocket disconnected', event.code, event.reason)
+        if (event.code !== 1000) {
+          console.log('WebSocket disconnected', event.code, event.reason)
+        }
         isConnected.value = false
         socket.value = null
 

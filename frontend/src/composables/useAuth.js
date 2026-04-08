@@ -45,7 +45,11 @@ export function useAuth() {
         throw new Error(response.data.message || 'Login failed')
       }
     } catch (err) {
-      error.value = err.response?.data?.message || err.message || 'Login failed'
+      if (err.response?.status === 429) {
+        error.value = 'Trop de tentatives de connexion. Veuillez patienter un instant puis reessayer.'
+      } else {
+        error.value = err.response?.data?.message || err.message || 'Login failed'
+      }
       toast.error('Échec de connexion', error.value)
       return { success: false, error: error.value }
     } finally {

@@ -35,9 +35,11 @@ axios.interceptors.response.use(
     // Show success notifications for certain operations
     if (response.config.method !== 'get' && response.data?.success) {
       const method = response.config.method?.toUpperCase()
+      const requestUrl = response.config.url || ''
+      const isAuthRoute = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/logout')
       if (method === 'POST' && response.config.url?.includes('/applications/apply')) {
         // Don't show notification for application submission
-      } else if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+      } else if (!isAuthRoute && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
         // Show success for create/update operations
         if (window.$toast) {
           window.$toast.success('Succès', 'Opération réalisée avec succès')
@@ -48,9 +50,11 @@ axios.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config
+    const requestUrl = originalRequest?.url || ''
+    const isLoginRoute = requestUrl.includes('/auth/login')
 
     // Show error notifications
-    if (error.response?.status >= 400 && window.$toast) {
+    if (error.response?.status >= 400 && window.$toast && !isLoginRoute) {
       const status = error.response.status
       const message = error.response.data?.message || error.response.data?.error || 'Une erreur est survenue'
 
@@ -62,6 +66,8 @@ axios.interceptors.response.use(
         window.$toast.error('Ressource introuvable', 'L\'élément demandé n\'existe pas')
       } else if (status === 422) {
         window.$toast.warning('Données invalides', message)
+      } else if (status === 429) {
+        window.$toast.warning('Trop de tentatives', 'Veuillez patienter avant de réessayer.')
       } else if (status >= 500) {
         window.$toast.error('Erreur serveur', 'Un problème technique est survenu')
       } else {
