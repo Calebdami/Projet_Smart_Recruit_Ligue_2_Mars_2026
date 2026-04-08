@@ -26,7 +26,7 @@ class UserService {
    * @returns {Promise<Object>} Upload result
    */
   async uploadAvatar(formData) {
-    const response = await api.post('/users/avatar', formData, {
+    const response = await api.post('/users/profile/avatar', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }

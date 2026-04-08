@@ -2,7 +2,7 @@
   <div class="flex min-h-screen bg-slate-100/80 transition-colors duration-300 dark:bg-black">
     <TheSidebar />
 
-    <div class="flex min-h-screen flex-1 flex-col pl-0 lg:pl-72">
+    <div class="flex min-h-screen flex-1 flex-col pl-0 lg:pl-16">
       <header
         class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/85 shadow-sm backdrop-blur-xl transition-colors duration-300 dark:border-slate-800 dark:bg-black/90"
       >

@@ -1,9 +1,9 @@
 <template>
   <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-      <router-link :to="`/candidates/${$route.params.id}`" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+      <button @click="goBackSafely" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
         ← Retour au profil
-      </router-link>
+      </button>
     </div>
 
     <div class="card-elevated p-6">
@@ -82,15 +82,25 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useCandidatesStore } from '@/stores/candidates'
 import { useUI } from '@/composables/useUI'
 
 const route = useRoute()
+const router = useRouter()
 const ui = useUI()
 const candidatesStore = useCandidatesStore()
 const { currentCandidate: candidate, candidateCV, loading } = storeToRefs(candidatesStore)
+
+const goBackSafely = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push(`/candidates/${route.params.id}`)
+  }
+}
+
 
 const cvUrl = ref(null)
 const parsedData = ref(null)

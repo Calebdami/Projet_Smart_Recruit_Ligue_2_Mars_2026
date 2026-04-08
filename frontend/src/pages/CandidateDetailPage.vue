@@ -1,9 +1,9 @@
 <template>
   <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-      <router-link to="/candidates" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+      <button @click="goBackSafely" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
         ← Retour aux candidatures
-      </router-link>
+      </button>
     </div>
 
     <div v-if="candidate" class="space-y-6">
@@ -18,14 +18,14 @@
             <p class="text-slate-600 dark:text-slate-400">{{ candidate.email }}</p>
             <p class="mt-1 text-slate-500">{{ candidate.phone ? candidate.phone : 'Téléphone non renseigné' }}</p>
             <div class="mt-4 flex gap-2">
-              <span class="rounded-full bg-brand-100 px-3 py-1 text-sm text-brand-800 dark:bg-brand-950/50 dark:text-brand-200">{{ candidate.role }}</span>
+              <span class="rounded-full bg-brand-100 px-3 py-1 text-sm text-brand-800 dark:bg-brand-950/50 dark:text-brand-200">{{ getRoleLabel(candidate) }}</span>
               <span v-if="candidate.is_active" class="rounded-full bg-emerald-100 px-3 py-1 text-sm text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200">Actif</span>
             </div>
           </div>
           <div class="text-right">
             <div class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200">
               <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
-              <span class="font-bold">{{ candidate.smart_score || 'N/A' }}</span>
+              <span class="font-bold">{{ getSmartScore(candidate) }}</span>
             </div>
           </div>
         </div>
@@ -84,16 +84,45 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useCandidatesStore } from '@/stores/candidates'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 
 const route = useRoute()
+const router = useRouter()
 const candidatesStore = useCandidatesStore()
 const { currentCandidate: candidate, loading } = storeToRefs(candidatesStore)
 
 const applications = ref([])
+
+const getRoleLabel = (candidate) => {
+  if (!candidate) return 'Non défini'
+  const roleValue = candidate.role || candidate.user?.role || candidate.account?.role
+  if (typeof roleValue === 'string') return roleValue
+  if (roleValue?.name) return roleValue.name
+  return 'Non défini'
+}
+
+const getSmartScore = (candidate) => {
+  if (!candidate) return 'N/A'
+  if (candidate.smart_score !== undefined && candidate.smart_score !== null) return candidate.smart_score
+  if (candidate.parsed_data?.smart_score !== undefined && candidate.parsed_data?.smart_score !== null) return candidate.parsed_data.smart_score
+
+  const skillsCount = Array.isArray(candidate.skills) ? candidate.skills.length : 0
+  const experience = Number(candidate.parsed_data?.experience) || 0
+  const applicationCount = applications.value.length
+  const score = Math.round(Math.min(100, Math.max(30, 40 + skillsCount * 6 + Math.min(20, experience * 2) + Math.min(20, applicationCount * 5))))
+  return score
+}
+
+const goBackSafely = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/candidates')
+  }
+}
 
 const loadCandidate = async () => {
   await candidatesStore.fetchCandidate(route.params.id)

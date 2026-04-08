@@ -1,9 +1,21 @@
 <template>
   <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6 flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Candidatures</h1>
-        <p class="text-sm text-slate-600 dark:text-slate-400">Suivez et gérez toutes les candidatures.</p>
+      <div class="flex items-center gap-4">
+        <router-link 
+          v-if="filters.job_id && selectedJob" 
+          :to="`/jobs/${filters.job_id}`" 
+          class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+        >
+          ← Retour à l'offre
+        </router-link>
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Candidatures</h1>
+          <p class="text-sm text-slate-600 dark:text-slate-400" v-if="filters.job_id && selectedJob">
+            Pour {{ selectedJob.title }}
+          </p>
+          <p class="text-sm text-slate-600 dark:text-slate-400" v-else>Suivez et gérez toutes les candidatures.</p>
+        </div>
       </div>
     </div>
 
@@ -78,13 +90,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useApplicationsStore } from '@/stores/applications'
 import { useJobsStore } from '@/stores/jobs'
 import { useUserStore } from '@/stores/user'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 
+const route = useRoute()
 const applicationsStore = useApplicationsStore()
 const jobsStore = useJobsStore()
 const userStore = useUserStore()
@@ -94,6 +108,33 @@ const { jobs } = storeToRefs(jobsStore)
 const { users: recruiters } = storeToRefs(userStore)
 
 const filters = ref({ search: '', status: '', job_id: '', recruiter_id: '' })
+
+// Computed property to get selected job details
+const selectedJob = computed(() => {
+  if (!filters.value.job_id) return null
+  return jobs.value.find(j => j.id === filters.value.job_id)
+})
+
+// Initialize filters from query parameters
+onMounted(async () => {
+  // Get query parameters from route
+  if (route.query.job_id) {
+    filters.value.job_id = route.query.job_id
+  }
+  if (route.query.status) {
+    filters.value.status = route.query.status
+  }
+  if (route.query.recruiter_id) {
+    filters.value.recruiter_id = route.query.recruiter_id
+  }
+  
+  // Load jobs and users for dropdown options
+  await jobsStore.fetchJobs()
+  await userStore.fetchUsers()
+  
+  // Load applications with applied filters
+  await loadApplications()
+})
 
 watch(filters, (newFilters) => {
   applicationsStore.setFilters(newFilters)

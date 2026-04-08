@@ -27,11 +27,19 @@ export const useCandidatesStore = defineStore('candidates', () => {
   const isLoading = computed(() => loading.value)
 
   // Stats
+  const getLatestApplication = (candidate) => {
+    if (candidate.last_application) return candidate.last_application
+    if (candidate.applications?.length) {
+      return [...candidate.applications].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+    }
+    return null
+  }
+
   const stats = computed(() => ({
     total: candidates.value.length,
     new: newCandidates.value.length,
-    in_process: candidates.value.filter(c => ['reviewing', 'interview', 'offer'].includes(c.last_application?.status)).length,
-    hired: candidates.value.filter(c => c.last_application?.status === 'hired').length
+    in_process: candidates.value.filter(c => ['reviewing', 'interview', 'offer'].includes(getLatestApplication(c)?.status)).length,
+    hired: candidates.value.filter(c => getLatestApplication(c)?.status === 'hired').length
   }))
 
   // Actions

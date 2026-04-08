@@ -3,7 +3,7 @@
     <nav
       class="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 shadow-sm backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-black/85"
     >
-      <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div class="mx-auto flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
         <router-link to="/" class="group flex items-center gap-2.5">
           <div
             class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-accent-600 shadow-md transition-all duration-300 group-hover:scale-105 group-hover:shadow-glow"

@@ -5,7 +5,7 @@ class JobController {
     // Get all jobs
     static async getAllJobs(req, res) {
         try {
-            const { page = 1, limit = 10, search = '', status = 'open' } = req.query;
+            const { page = 1, limit = 10, search = '', status = '' } = req.query;
             const offset = (page - 1) * limit;
 
             const query = db('jobs');
@@ -86,11 +86,12 @@ class JobController {
     static async createJob(req, res) {
         try {
             const userId = req.user.id;
-            const jobData = req.body;
+            const { skills, ...jobData } = req.body;
 
             const [job] = await db('jobs')
                 .insert({
                     ...jobData,
+                    skills_required: JSON.stringify(skills),
                     created_by: userId,
                     created_at: db.fn.now(),
                     updated_at: db.fn.now(),
@@ -127,7 +128,7 @@ class JobController {
         try {
             const { id } = req.params;
             const userId = req.user.id;
-            const jobData = req.body;
+            const { skills, ...jobData } = req.body;
 
             // Check if job exists and user has permission
             const job = await db('jobs').where('id', id).first();
@@ -151,6 +152,7 @@ class JobController {
                 .where('id', id)
                 .update({
                     ...jobData,
+                    skills_required: JSON.stringify(skills),
                     updated_at: db.fn.now(),
                 })
                 .returning('*');

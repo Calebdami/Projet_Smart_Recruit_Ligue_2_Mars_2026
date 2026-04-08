@@ -3,6 +3,9 @@
     id="app"
     class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-accent-50/30 text-slate-900 transition-colors duration-300 dark:from-black dark:via-black dark:to-black dark:text-slate-100 mesh-bg"
   >
+    <!-- Global Toast Notifications -->
+    <NotificationToast />
+
     <ConfirmModal
       :show="ui.confirmModal.show"
       :type="ui.confirmModal.type"
@@ -37,6 +40,7 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
+import NotificationToast from '@/components/common/NotificationToast.vue'
 
 const route = useRoute()
 const ui = useUI()

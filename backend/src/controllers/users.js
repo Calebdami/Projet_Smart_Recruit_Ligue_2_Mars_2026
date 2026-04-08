@@ -63,7 +63,9 @@ class UsersController {
                 data: {
                     user: {
                         ...user,
-                        preferences: JSON.parse(user.preferences || '{}'),
+                        preferences: typeof user.preferences === 'string' 
+                            ? JSON.parse(user.preferences || '{}') 
+                            : (user.preferences || {}),
                     },
                 },
             });
@@ -185,7 +187,9 @@ class UsersController {
                 data: {
                     user: {
                         ...updatedUser,
-                        preferences: JSON.parse(updatedUser.preferences || '{}'),
+                        preferences: typeof updatedUser.preferences === 'string'
+                            ? JSON.parse(updatedUser.preferences || '{}')
+                            : (updatedUser.preferences || {}),
                     },
                 },
                 message: 'Profile updated successfully',
@@ -203,12 +207,9 @@ class UsersController {
     // Get all users (admin only)
     static async getUsers(req, res) {
         try {
-            const { page = 1, limit = 10, role, search, sortBy = 'created_at', sortOrder = 'desc' } = req.query;
+            const { page = 1, limit = 10, role, search, is_active, sortBy = 'created_at', sortOrder = 'desc' } = req.query;
 
             let query = db('users')
-                .where(function() {
-                    this.where('is_active', true).orWhereNull('is_active')
-                })
                 .select(
                     'id',
                     'email',
@@ -219,10 +220,17 @@ class UsersController {
                     'avatar_url',
                     'email_verified',
                     'two_factor_enabled',
+                    'is_active',
                     'last_login_at',
                     'created_at',
                     'updated_at'
                 );
+
+            // Apply is_active filter only if specified
+            if (is_active !== undefined && is_active !== '') {
+                const active = is_active === 'true' || is_active === true;
+                query = query.where('is_active', active);
+            }
 
             // Apply filters
             if (role) {
@@ -252,9 +260,14 @@ class UsersController {
             const users = await query;
 
             // Get total count for pagination
-            let countQuery = db('users').where(function() {
-                this.where('is_active', true).orWhereNull('is_active')
-            });
+            let countQuery = db('users');
+            
+            // Apply is_active filter to count only if specified
+            if (is_active !== undefined && is_active !== '') {
+                const active = is_active === 'true' || is_active === true;
+                countQuery = countQuery.where('is_active', active);
+            }
+            
             if (role) countQuery = countQuery.where('role', role);
             if (search) {
                 countQuery = countQuery.where(function() {

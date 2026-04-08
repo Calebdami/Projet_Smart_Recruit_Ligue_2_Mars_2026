@@ -19,6 +19,16 @@ const updateStatusValidation = [
   body('notes').optional().isArray(),
 ];
 
+const assignRecruiterValidation = [
+  // Pas de validation stricte - le contrôleur gère null et les UUID
+];
+
+const bulkAssignRecruiterValidation = [
+  body('application_ids').isArray().withMessage('Application IDs must be an array'),
+  body('application_ids.*').isUUID().withMessage('Each application ID must be a valid UUID'),
+  // recruiter_id pas de validation stricte - le contrôleur gère null et les UUID
+];
+
 // Candidate routes
 router.post('/apply',
   authenticate,
@@ -35,10 +45,22 @@ router.get('/my-applications',
 );
 
 // Recruiter/Admin routes
+router.get('/',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  ApplicationController.getApplications
+);
+
 router.get('/job/:jobId',
   authenticate,
   authorize(['recruiter', 'admin']),
   ApplicationController.getJobApplications
+);
+
+router.get('/:id',
+  authenticate,
+  authorize(['recruiter', 'admin', 'candidate']),
+  ApplicationController.getApplication
 );
 
 router.patch('/:id/status',
@@ -47,6 +69,21 @@ router.patch('/:id/status',
   updateStatusValidation,
   validateRequest,
   ApplicationController.updateStatus
+);
+
+router.patch('/:id/assign',
+  authenticate,
+  authorize(['admin']),
+  // Pas de validation stricte - le contrôleur gère les cas
+  ApplicationController.assignRecruiter
+);
+
+router.patch('/bulk-assign',
+  authenticate,
+  authorize(['admin']),
+  bulkAssignRecruiterValidation,
+  validateRequest,
+  ApplicationController.bulkAssignRecruiter
 );
 
 export default router;

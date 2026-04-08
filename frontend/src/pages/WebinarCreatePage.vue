@@ -1,9 +1,9 @@
 <template>
   <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-      <router-link to="/webinars" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+      <button @click="goBackSafely" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
         ← Retour aux webinaires
-      </router-link>
+      </button>
     </div>
 
     <h1 class="mb-6 text-2xl font-bold text-slate-900 dark:text-white">Nouveau webinaire</h1>
@@ -46,7 +46,7 @@
       </div>
 
       <div class="flex gap-3 pt-4">
-        <button type="button" class="btn-secondary" @click="$router.push('/webinars')">Annuler</button>
+        <button type="button" class="btn-secondary" @click="goBackSafely">Annuler</button>
         <button type="submit" class="btn-primary" :disabled="isSubmitting">
           <span v-if="isSubmitting">Création...</span>
           <span v-else>Créer le webinaire</span>
@@ -64,6 +64,14 @@ import { useWebinarsStore } from '@/stores/webinars'
 const router = useRouter()
 const webinarsStore = useWebinarsStore()
 const isSubmitting = ref(false)
+
+const goBackSafely = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/webinars')
+  }
+}
 
 const form = ref({
   title: '',

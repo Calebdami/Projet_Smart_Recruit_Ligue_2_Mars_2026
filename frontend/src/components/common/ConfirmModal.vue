@@ -64,7 +64,7 @@
 </template>
 
 <script setup>
-import { defineProps, defineEmits, h } from 'vue'
+import { h } from 'vue'
 
 // Icon Components
 const WarningIcon = () => h('svg', {

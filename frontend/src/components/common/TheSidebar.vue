@@ -27,19 +27,19 @@
           :to="item.to"
           :class="[
             'group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300',
-            isActive(item.to)
+            isActive(item.to, item.exact)
               ? 'bg-gradient-to-r from-brand-600/25 to-accent-600/10 text-white shadow-inner ring-1 ring-brand-500/30'
               : 'text-slate-400 hover:bg-slate-800/60 hover:text-white',
           ]"
         >
           <span
-            v-if="isActive(item.to)"
+            v-if="isActive(item.to, item.exact)"
             class="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-brand-400 to-accent-400"
           />
           <span
             :class="[
               'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-300',
-              isActive(item.to)
+              isActive(item.to, item.exact)
                 ? 'bg-brand-500/20 text-brand-300'
                 : 'bg-slate-800/50 text-slate-500 group-hover:bg-slate-700/80 group-hover:text-slate-200',
             ]"
@@ -179,6 +179,11 @@ const UsersIcon = () =>
     'M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 12a6 6 0 00-11.86 0v3h12v-3zM17 16a2 2 0 11-4 0 2 2 0 014 0z'
   )
 
+const UserGroupIcon = () =>
+  icon(
+    'M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z'
+  )
+
 const BriefcaseIcon = () =>
   icon(
     'M4 4a2 2 0 012-2h6a1 1 0 01.707.293l2.828 2.829A1 1 0 0115 4h1a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm0 4a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z'
@@ -195,14 +200,19 @@ const DocumentIcon = () =>
 const menuItems = [
   { label: 'Tableau de bord', to: '/', icon: HomeIcon, permission: 'view_own_profile' },
   { label: 'Utilisateurs', to: '/users', icon: UsersIcon, permission: 'view_users' },
-  { label: 'Candidats', to: '/candidates', icon: UsersIcon, permission: 'view_candidates' },
+  { label: 'Candidats', to: '/candidates', icon: UsersIcon, permission: 'view_candidates', exact: true },
+  { label: 'Assignation', to: '/candidates/assign', icon: UserGroupIcon, permission: 'view_candidates' },
   { label: 'Offres', to: '/jobs', icon: BriefcaseIcon, permission: 'view_jobs' },
   { divider: true },
   { label: 'Analytique', to: '/analytics', icon: ChartIcon, permission: 'view_analytics' },
   { label: 'Audit', to: '/audit', icon: DocumentIcon, permission: 'view_audit_logs' },
 ]
 
-const isActive = (path) => {
+const isActive = (path, exact = false) => {
+  if (exact) {
+    return route.path === path
+  }
+
   return route.path === path || route.path.startsWith(path + '/')
 }
 

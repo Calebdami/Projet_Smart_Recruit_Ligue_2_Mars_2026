@@ -39,6 +39,12 @@ const routes = [
     meta: { requiresAuth: true, requiresRole: 'admin', layout: 'MainLayout' }
   },
   {
+    path: '/candidates/assign',
+    name: 'CandidateAssignment',
+    component: () => import('@/pages/CandidateAssignmentPage.vue'),
+    meta: { requiresAuth: true, requiresRole: 'admin', layout: 'MainLayout' }
+  },
+  {
     path: '/audit',
     name: 'AuditTrail',
     component: () => import('@/pages/AuditPage.vue'),

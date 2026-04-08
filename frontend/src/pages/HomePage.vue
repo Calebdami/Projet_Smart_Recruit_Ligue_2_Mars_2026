@@ -1,6 +1,6 @@
 <template>
   <div class="mesh-bg -mx-4 -mt-6 min-h-full px-4 pb-16 pt-6 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-    <div class="mx-auto max-w-7xl">
+    <div class="mx-auto w-full px-4 lg:px-8">
       <header class="mb-10 animate-fade-in-up sm:mb-14">
         <p class="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-200/80 bg-brand-50/80 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-700 dark:border-brand-500/30 dark:bg-brand-950/40 dark:text-brand-300">
           <span class="h-1.5 w-1.5 rounded-full bg-accent-500" />
@@ -167,6 +167,58 @@
         </div>
       </div>
 
+      <!-- Test Notifications Section (Development Only) -->
+      <!-- <section v-if="isDev" class="animate-fade-in-up mb-12">
+        <div class="mb-6 text-center">
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">🧪 Test des Notifications</h2>
+          <p class="mx-auto mt-1 max-w-md text-sm text-slate-600 dark:text-slate-400">Cliquez sur les boutons pour tester le système de notifications</p>
+        </div>
+        <div class="flex flex-wrap justify-center gap-3">
+          <button
+            @click="testNotification('success')"
+            class="btn-success"
+          >
+            ✅ Succès
+          </button>
+          <button
+            @click="testNotification('error')"
+            class="btn-error"
+          >
+            ❌ Erreur
+          </button>
+          <button
+            @click="testNotification('warning')"
+            class="btn-warning"
+          >
+            ⚠️ Avertissement
+          </button>
+          <button
+            @click="testNotification('info')"
+            class="btn-info"
+          >
+            ℹ️ Information
+          </button>
+          <button
+            @click="testNotification('connection')"
+            class="btn-secondary"
+          >
+            🔗 Connexion
+          </button>
+          <button
+            @click="testNotification('update')"
+            class="btn-primary"
+          >
+            🔄 Mise à jour
+          </button>
+          <button
+            @click="testApiError"
+            class="btn-error"
+          >
+            🚫 Test API Error
+          </button>
+        </div>
+      </section> -->
+
       <section class="animate-fade-in-up">
         <div class="mb-10 text-center">
           <h2 class="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Pourquoi SmartRecruit ?</h2>
@@ -197,15 +249,52 @@
 import { computed, h, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useAnalyticsStore } from '@/stores/analytics'
+import { useToast } from '@/composables/useToast'
+import axios from 'axios'
 
 const authStore = useAuthStore()
 const analyticsStore = useAnalyticsStore()
 const user = computed(() => authStore.user)
+const toast = useToast()
+const isDev = computed(() => import.meta.env.DEV)
 
 // Fetch real data on mount
 onMounted(() => {
   analyticsStore.fetchDashboardStats()
 })
+
+// Test notification function
+const testNotification = (type) => {
+  const messages = {
+    success: { title: 'Succès !', message: 'L\'opération a été réalisée avec succès.' },
+    error: { title: 'Erreur', message: 'Une erreur inattendue s\'est produite.' },
+    warning: { title: 'Attention', message: 'Veuillez vérifier vos informations.' },
+    info: { title: 'Information', message: 'Voici une information importante.' },
+    connection: { title: 'Connexion établie', message: 'Vous êtes maintenant connecté.' },
+    update: { title: 'Mise à jour', message: 'Vos données ont été mises à jour.' }
+  }
+
+  const { title, message } = messages[type]
+  toast[type](title, message)
+}
+
+// Test API error notification
+const testApiError = async () => {
+  try {
+    // Temporarily change axios base URL to trigger an error
+    const originalBaseURL = axios.defaults.baseURL
+    axios.defaults.baseURL = 'http://invalid-url-that-does-not-exist.com'
+
+    await axios.get('/test-error-endpoint')
+
+    // Restore original base URL
+    axios.defaults.baseURL = originalBaseURL
+  } catch (error) {
+    // Error will be handled by axios interceptor
+    // Restore original base URL
+    axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1'
+  }
+}
 
 const UsersSvg = () =>
   h('svg', { fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24', class: 'h-full w-full' }, [

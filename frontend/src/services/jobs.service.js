@@ -17,7 +17,7 @@ class JobsService {
   }
 
   async updateJob(id, data) {
-    const response = await api.put(`/jobs/${id}`, data)
+    const response = await api.patch(`/jobs/${id}`, data)
     return response.data
   }
 
@@ -26,7 +26,7 @@ class JobsService {
   }
 
   async closeJob(id) {
-    const response = await api.post(`/jobs/${id}/close`)
+    const response = await api.patch(`/jobs/${id}`, { status: 'closed' })
     return response.data
   }
 

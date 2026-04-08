@@ -1,9 +1,9 @@
 <template>
   <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-      <router-link to="/applications" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+      <button @click="goBackSafely" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
         ← Retour aux candidatures
-      </router-link>
+      </button>
     </div>
 
     <div v-if="application" class="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -61,9 +61,9 @@
       <div class="space-y-6">
         <!-- Assignment -->
         <div class="card-elevated p-4">
-          <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Assigné à</h3>
+          <h3 class="font-semibold text-slate-900 dark:text-white mb-3"> Assigné à</h3>
           <select v-model="application.recruiter_id" class="input-field text-sm" @change="assignRecruiter">
-            <option :value="null">Non assigné</option>
+            <option :value="null">Non </option>
             <option v-for="user in recruiters" :key="user.id" :value="user.id">{{ user.first_name }} {{ user.last_name }}</option>
           </select>
         </div>
@@ -104,7 +104,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useApplicationsStore } from '@/stores/applications'
 import { useUserStore } from '@/stores/user'
@@ -112,8 +112,17 @@ import BaseLoading from '@/components/common/BaseLoading.vue'
 import ApplicationPipeline from '@/components/core/ApplicationPipeline.vue'
 
 const route = useRoute()
+const router = useRouter()
 const applicationsStore = useApplicationsStore()
 const userStore = useUserStore()
+
+const goBackSafely = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/applications')
+  }
+}
 
 const { currentApplication: application, loading } = storeToRefs(applicationsStore)
 const { users: recruiters } = storeToRefs(userStore)
@@ -139,7 +148,7 @@ const updateStatus = async (newStatus) => {
 const assignRecruiter = async () => {
   await applicationsStore.assignRecruiter(route.params.id, application.value.recruiter_id)
   const recruiter = recruiters.value.find(r => r.id === application.value.recruiter_id)
-  timeline.value.unshift({ action: `Assigné à ${recruiter?.first_name || 'personne'}`, created_at: new Date().toISOString() })
+  timeline.value.unshift({ action: ` à ${recruiter?.first_name || 'personne'}`, created_at: new Date().toISOString() })
 }
 
 const saveNotes = async () => {

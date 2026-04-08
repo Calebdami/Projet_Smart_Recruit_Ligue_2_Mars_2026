@@ -22,7 +22,17 @@ class ApplicationsService {
   }
 
   async assignRecruiter(id, recruiterId) {
-    const response = await api.patch(`/applications/${id}/assign`, { recruiter_id: recruiterId })
+    const payload = { recruiter_id: recruiterId }
+    const response = await api.patch(`/applications/${id}/assign`, payload)
+    return response.data
+  }
+
+  async bulkAssignRecruiter(applicationIds, recruiterId) {
+    const payload = {
+      application_ids: applicationIds,
+      recruiter_id: recruiterId,
+    }
+    const response = await api.patch('/applications/bulk-assign', payload)
     return response.data
   }
 

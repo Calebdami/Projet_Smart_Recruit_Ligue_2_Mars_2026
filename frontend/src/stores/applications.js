@@ -98,6 +98,30 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
+  const bulkAssignRecruiter = async (applicationIds, recruiterId) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.bulkAssignRecruiter(applicationIds, recruiterId)
+      const updatedApplications = response.data?.applications || response.data || []
+
+      // Update local state
+      updatedApplications.forEach(updated => {
+        const index = applications.value.findIndex(a => a.id === updated.id)
+        if (index !== -1) {
+          applications.value[index] = { ...applications.value[index], ...updated }
+        }
+      })
+
+      return { success: true, applications: updatedApplications }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to bulk assign recruiters'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const addNote = async (id, note) => {
     loading.value = true
     error.value = null
@@ -139,6 +163,7 @@ export const useApplicationsStore = defineStore('applications', () => {
     fetchApplication,
     updateStatus,
     assignRecruiter,
+    bulkAssignRecruiter,
     addNote,
     setFilters,
     clearError

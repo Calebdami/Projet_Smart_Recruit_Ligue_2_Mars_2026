@@ -89,21 +89,21 @@
               </div>
             </td>
             <td class="px-6 py-4">
-              <p class="text-sm text-slate-900 dark:text-white">{{ candidate.last_application?.job_title }}</p>
-              <p class="text-sm text-slate-500">{{ candidate.last_application?.department }}</p>
+              <p class="text-sm text-slate-900 dark:text-white">{{ getLatestJobTitle(candidate) }}</p>
+              <p class="text-sm text-slate-500">{{ getLatestDepartment(candidate) }}</p>
             </td>
             <td class="px-6 py-4">
               <div class="flex items-center gap-2">
                 <div class="h-2 w-16 rounded-full bg-slate-200 dark:bg-slate-700">
                   <div class="h-2 rounded-full bg-brand-500" :style="`width: ${candidate.smart_score || 0}%`"></div>
                 </div>
-                <span class="text-sm font-medium" :class="getScoreClass(candidate.smart_score)">{{ candidate.smart_score || 'N/A' }}</span>
+                <span class="text-sm font-medium" :class="getScoreClass(candidate.smart_score)">{{ candidate.smart_score !== undefined && candidate.smart_score !== null ? candidate.smart_score : 'N/A' }}</span>
               </div>
             </td>
             <td class="px-6 py-4">
-              <span :class="getStatusClass(candidate.last_application?.status)">{{ getStatusLabel(candidate.last_application?.status) }}</span>
+              <span :class="getStatusClass(getLatestStatus(candidate))">{{ getStatusLabel(getLatestStatus(candidate)) }}</span>
             </td>
-            <td class="px-6 py-4 text-sm text-slate-500">{{ formatDate(candidate.last_application?.created_at) }}</td>
+            <td class="px-6 py-4 text-sm text-slate-500">{{ formatDate(getLatestApplicationDate(candidate)) }}</td>
             <td class="px-6 py-4 text-right">
               <router-link :to="`/candidates/${candidate.id}`" class="text-sm text-brand-600 hover:underline dark:text-brand-400">Voir →</router-link>
             </td>
@@ -173,6 +173,31 @@ const getScoreClass = (score) => {
   if (score >= 80) return 'text-brand-600 dark:text-brand-400'
   if (score >= 70) return 'text-amber-600 dark:text-amber-400'
   return 'text-slate-600 dark:text-slate-400'
+}
+
+const getLatestApplication = (candidate) => {
+  if (candidate.last_application) return candidate.last_application
+  if (candidate.applications?.length) {
+    return [...candidate.applications].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+  }
+  return null
+}
+
+const getLatestJobTitle = (candidate) => {
+  const app = getLatestApplication(candidate)
+  return app?.job_title || app?.job?.title || 'Aucune candidature'
+}
+
+const getLatestDepartment = (candidate) => {
+  const app = getLatestApplication(candidate)
+  return app?.department || app?.job?.department || '-' 
+}
+
+const getLatestStatus = (candidate) => getLatestApplication(candidate)?.status || 'inconnu'
+
+const getLatestApplicationDate = (candidate) => {
+  const app = getLatestApplication(candidate)
+  return app?.created_at || app?.applied_at || null
 }
 
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('fr-FR') : '-'

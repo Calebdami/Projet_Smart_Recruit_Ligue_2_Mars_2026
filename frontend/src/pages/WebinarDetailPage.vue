@@ -1,9 +1,9 @@
 <template>
   <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-      <router-link to="/webinars" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+      <button @click="goBackSafely" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
         ← Retour aux webinaires
-      </router-link>
+      </button>
     </div>
 
     <div v-if="webinar" class="space-y-6">
@@ -104,14 +104,23 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useWebinarsStore } from '@/stores/webinars'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 
 const route = useRoute()
+const router = useRouter()
 const webinarsStore = useWebinarsStore()
 const { currentWebinar: webinar, registrations, loading } = storeToRefs(webinarsStore)
+
+const goBackSafely = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/webinars')
+  }
+}
 
 const loadWebinar = async () => {
   await webinarsStore.fetchWebinar(route.params.id)

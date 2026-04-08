@@ -2,11 +2,24 @@ import { db } from '../config/database.js';
 
 const auditLog = async (data) => {
   try {
+    const metadata = {
+      ...(data.metadata || {}),
+      ...(data.details ? { details: data.details } : {}),
+    };
+
     await db('audit_trail').insert({
-      ...data,
+      action: data.action,
+      entity_type: data.entity_type,
+      entity_id: data.entity_id,
+      user_id: data.user_id,
+      ip_address: data.ip_address,
+      user_agent: data.user_agent,
+      session_id: data.session_id,
+      request_id: data.request_id,
+      is_sensitive: data.is_sensitive,
       old_values: data.old_values ? JSON.stringify(data.old_values) : null,
       new_values: data.new_values ? JSON.stringify(data.new_values) : null,
-      metadata: JSON.stringify(data.metadata || {}),
+      metadata: JSON.stringify(metadata),
     });
   } catch (error) {
     console.error('Failed to create audit log:', error);

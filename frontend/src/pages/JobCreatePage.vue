@@ -1,9 +1,9 @@
 <template>
   <div class="mx-auto max-w-3xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-      <router-link to="/jobs" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+      <button @click="goBackSafely" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
         ← Retour aux offres
-      </router-link>
+      </button>
     </div>
 
     <h1 class="mb-6 text-2xl font-bold text-slate-900 dark:text-white">Nouvelle offre d'emploi</h1>
@@ -51,6 +51,16 @@
             <option value="internship">Stage</option>
           </select>
         </div>
+        <div>
+          <label class="label-field">Niveau d'expérience</label>
+          <select v-model="form.experience_level" required class="input-field">
+            <option value="">Sélectionner...</option>
+            <option value="junior">Junior</option>
+            <option value="mid">Intermédiaire</option>
+            <option value="senior">Senior</option>
+            <option value="executive">Cadre</option>
+          </select>
+        </div>
       </div>
 
       <div>
@@ -64,7 +74,7 @@
       </div>
 
       <div class="flex gap-3 pt-4">
-        <button type="button" class="btn-secondary" @click="$router.push('/jobs')">Annuler</button>
+        <button type="button" class="btn-secondary" @click="goBackSafely">Annuler</button>
         <button type="submit" class="btn-primary" :disabled="isSubmitting">
           <span v-if="isSubmitting">Création...</span>
           <span v-else>Créer l'offre</span>
@@ -83,6 +93,14 @@ const router = useRouter()
 const jobsStore = useJobsStore()
 const isSubmitting = ref(false)
 
+const goBackSafely = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/jobs')
+  }
+}
+
 const form = ref({
   title: '',
   description: '',
@@ -90,6 +108,7 @@ const form = ref({
   location: '',
   salary_range: '',
   contract_type: '',
+  experience_level: '',
   skills: '',
   publish_immediately: false
 })
@@ -97,9 +116,32 @@ const form = ref({
 const handleSubmit = async () => {
   isSubmitting.value = true
   try {
+    // Parse salary range
+    let salary_min = null
+    let salary_max = null
+    if (form.value.salary_range) {
+      const range = form.value.salary_range.replace(/[^\d\-k]/gi, '').toLowerCase()
+      const parts = range.split('-')
+      if (parts.length === 2) {
+        salary_min = parseInt(parts[0].replace('k', '000')) || null
+        salary_max = parseInt(parts[1].replace('k', '000')) || null
+      }
+    }
+
+    // Parse skills
+    const skills = form.value.skills ? form.value.skills.split(',').map(s => s.trim()).filter(s => s) : []
+
     const jobData = {
-      ...form.value,
-      status: form.value.publish_immediately ? 'published' : 'draft'
+      title: form.value.title,
+      description: form.value.description,
+      department: form.value.department,
+      location: form.value.location,
+      employment_type: form.value.contract_type,
+      experience_level: form.value.experience_level,
+      salary_min,
+      salary_max,
+      skills,
+      status: form.value.publish_immediately ? 'open' : 'draft'
     }
     const result = await jobsStore.createJob(jobData)
     if (result.success) {

@@ -5,6 +5,7 @@ import router from './router'
 import axios from 'axios'
 import './index.css'
 import { initTheme } from './composables/useTheme'
+import { toastPlugin } from './composables/useToast'
 
 initTheme()
 import { permissionDirective } from './directives/permissions'
@@ -28,11 +29,45 @@ axios.interceptors.request.use(
   }
 )
 
-// Add axios interceptor for token refresh
+// Add axios interceptor for token refresh and notifications
 axios.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Show success notifications for certain operations
+    if (response.config.method !== 'get' && response.data?.success) {
+      const method = response.config.method?.toUpperCase()
+      if (method === 'POST' && response.config.url?.includes('/applications/apply')) {
+        // Don't show notification for application submission
+      } else if (method === 'POST' || method === 'PUT' || method === 'PATCH') {
+        // Show success for create/update operations
+        if (window.$toast) {
+          window.$toast.success('Succès', 'Opération réalisée avec succès')
+        }
+      }
+    }
+    return response
+  },
   async (error) => {
     const originalRequest = error.config
+
+    // Show error notifications
+    if (error.response?.status >= 400 && window.$toast) {
+      const status = error.response.status
+      const message = error.response.data?.message || error.response.data?.error || 'Une erreur est survenue'
+
+      if (status === 401) {
+        window.$toast.warning('Session expirée', 'Veuillez vous reconnecter')
+      } else if (status === 403) {
+        window.$toast.warning('Accès refusé', 'Vous n\'avez pas les permissions nécessaires')
+      } else if (status === 404) {
+        window.$toast.error('Ressource introuvable', 'L\'élément demandé n\'existe pas')
+      } else if (status === 422) {
+        window.$toast.warning('Données invalides', message)
+      } else if (status >= 500) {
+        window.$toast.error('Erreur serveur', 'Un problème technique est survenu')
+      } else {
+        window.$toast.error('Erreur', message)
+      }
+    }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true
@@ -81,6 +116,10 @@ app.config.globalProperties.$can = (permission) => {
 // Use plugins
 app.use(pinia)
 app.use(router)
+app.use(toastPlugin)
+
+// Make toast available globally for axios interceptors
+window.$toast = app.config.globalProperties.$toast
 
 app.mount('#app')
 

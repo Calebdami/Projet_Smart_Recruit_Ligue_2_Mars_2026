@@ -1,9 +1,9 @@
 <template>
   <div class="mx-auto max-w-4xl px-4 py-6 sm:px-6 lg:px-8">
     <div class="mb-6">
-      <router-link to="/jobs" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
+      <button @click="goBackSafely" class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white">
         ← Retour aux offres
-      </router-link>
+      </button>
     </div>
 
     <div v-if="job" class="card-elevated p-6">
@@ -16,8 +16,8 @@
           <p class="mt-2 text-slate-600 dark:text-slate-400">{{ job.department }} • {{ job.location }}</p>
         </div>
         <div class="flex gap-2">
-          <router-link v-if="$can('edit_jobs')" :to="`/jobs/${job.id}/edit`" class="btn-secondary">Modifier</router-link>
-          <button v-if="$can('edit_jobs') && job.status !== 'closed'" class="btn-secondary" @click="closeJob">Clôturer</button>
+          <router-link v-if="$can('update_jobs')" :to="`/jobs/${job.id}/edit`" class="btn-secondary">Modifier</router-link>
+          <button v-if="$can('update_jobs') && job.status !== 'closed'" class="btn-secondary" @click="closeJob">Clôturer</button>
         </div>
       </div>
 
@@ -44,11 +44,11 @@
             <dl class="mt-3 space-y-2 text-sm">
               <div class="flex justify-between">
                 <dt class="text-slate-500">Salaire:</dt>
-                <dd class="text-slate-900 dark:text-white">{{ job.salary_range || 'Non spécifié' }}</dd>
+                <dd class="text-slate-900 dark:text-white">{{ job.salary_min || 'Non spécifié' }} à {{ job.salary_max || 'Non spécifié' }} £</dd>
               </div>
               <div class="flex justify-between">
                 <dt class="text-slate-500">Contrat:</dt>
-                <dd class="text-slate-900 dark:text-white">{{ job.contract_type }}</dd>
+                <dd class="text-slate-900 dark:text-white">{{ job.employment_type === 'full_time' ? 'Temps plein' : 'Temps partiel' || 'Non spécifié' }}</dd>
               </div>
               <div class="flex justify-between">
                 <dt class="text-slate-500">Publié le:</dt>
@@ -74,14 +74,23 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useJobsStore } from '@/stores/jobs'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 
 const route = useRoute()
+const router = useRouter()
 const jobsStore = useJobsStore()
 const { currentJob: job, loading } = storeToRefs(jobsStore)
+
+const goBackSafely = () => {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/jobs')
+  }
+}
 
 const loadJob = async () => {
   await jobsStore.fetchJob(route.params.id)
