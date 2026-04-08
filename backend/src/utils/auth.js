@@ -15,8 +15,10 @@ const verifyPassword = async (password, hash) => {
 
 // JWT token generation and verification
 const generateTokens = async (user) => {
+  const userId = user._id || user.id;
   const payload = { 
-    id: user._id || user.id, 
+    id: userId,
+    sub: userId,
     role: user.role 
   };
   const access_token = jwt.sign(

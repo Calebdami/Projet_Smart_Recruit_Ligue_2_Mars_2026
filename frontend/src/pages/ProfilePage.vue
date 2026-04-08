@@ -181,17 +181,19 @@ onMounted(() => {
 })
 
 const loadProfile = async () => {
-  try {
-    const profile = await userStore.getProfile()
-    formData.value = {
-      firstName: profile.firstName || '',
-      lastName: profile.lastName || '',
-      email: profile.email || '',
-      phone: profile.phone || '',
-      bio: profile.bio || ''
-    }
-  } catch (error) {
-    showError('Failed to load profile')
+  const result = await userStore.fetchProfile()
+  if (!result.success || !result.user) {
+    showError('Impossible de charger le profil')
+    return
+  }
+
+  const profile = result.user
+  formData.value = {
+    firstName: profile.first_name || profile.firstName || '',
+    lastName: profile.last_name || profile.lastName || '',
+    email: profile.email || '',
+    phone: profile.phone || '',
+    bio: profile.bio || ''
   }
 }
 
@@ -200,9 +202,24 @@ const handleSubmit = async () => {
   errors.value = {}
 
   try {
-    await userStore.updateProfile(formData.value)
-    showSuccess('Profile updated successfully!')
-    await authStore.refreshUser()
+    const result = await userStore.updateProfile({
+      first_name: formData.value.firstName,
+      last_name: formData.value.lastName,
+      phone: formData.value.phone
+    })
+    if (!result.success) {
+      showError(result.error || 'Échec de mise à jour du profil')
+      return
+    }
+    authStore.updateUser(result.user)
+    formData.value = {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      bio: ''
+    }
+    showSuccess('Profil mis à jour avec succès')
   } catch (error) {
     if (error.response?.data?.errors) {
       errors.value = error.response.data.errors
@@ -231,13 +248,19 @@ const handleAvatarChange = async (event) => {
   }
 
   try {
-    const formDataObj = new FormData()
-    formDataObj.append('avatar', file)
-    await userStore.uploadAvatar(formDataObj)
-    showSuccess('Avatar updated successfully!')
-    await authStore.refreshUser()
+    const result = await userStore.uploadAvatar(file)
+    if (!result.success) {
+      showError(result.error || 'Échec de mise à jour de la photo')
+      return
+    }
+    authStore.updateUser({ avatar_url: result.avatarUrl })
+    showSuccess('Photo de profil mise à jour')
   } catch (error) {
-    showError('Failed to upload avatar')
+    showError('Échec de l’upload de la photo')
+  } finally {
+    if (avatarInput.value) {
+      avatarInput.value.value = ''
+    }
   }
 }
 
@@ -256,7 +279,7 @@ const disable2FA = async () => {
   try {
     await authStore.disable2FA('current-code')
     showSuccess('2FA disabled successfully')
-    await authStore.refreshUser()
+    authStore.updateUser({ two_factor_enabled: false })
   } catch (error) {
     showError('Failed to disable 2FA')
   }

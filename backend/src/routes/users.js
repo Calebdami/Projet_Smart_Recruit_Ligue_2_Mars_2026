@@ -6,8 +6,15 @@ import { validateRequest } from '../middleware/validation.js';
 import multer from 'multer';
 import sharp from 'sharp';
 import { db } from '../config/database.js';
+import { NotificationService } from '../services/notifications.js';
+import { mkdir, writeFile } from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const router = express.Router();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const uploadsRoot = path.resolve(__dirname, '../../uploads/avatars');
 
 // Configure multer for avatar upload
 const upload = multer({
@@ -75,6 +82,7 @@ router.post('/profile/avatar',
   upload.single('avatar'),
   async (req, res) => {
     try {
+      const currentUserId = req.user?.sub || req.user?.id;
       if (!req.file) {
         res.status(400).json({
           success: false,
@@ -91,17 +99,33 @@ router.post('/profile/avatar',
         .toBuffer();
 
       // Generate filename
-      const filename = `avatar_${req.user.sub}_${Date.now()}.jpg`;
+      const filename = `avatar_${currentUserId}_${Date.now()}.jpg`;
       const avatarUrl = `/uploads/avatars/${filename}`;
+      const destinationPath = path.join(uploadsRoot, filename);
 
-      // In a real implementation, you would save the file to disk or cloud storage
-      // For now, we'll just update the database with the URL
+      // Persist avatar on disk so the URL is actually reachable.
+      await mkdir(uploadsRoot, { recursive: true });
+      await writeFile(destinationPath, processedImage);
+
       await db('users')
-        .where('id', req.user.sub)
+        .where('id', currentUserId)
         .update({
           avatar_url: avatarUrl,
           updated_at: new Date(),
         });
+
+      await NotificationService.create({
+        userId: currentUserId,
+        type: 'system_update',
+        title: 'Photo de profil modifiee',
+        message: 'Votre photo de profil a ete mise a jour.',
+        data: {
+          action: 'avatar_update',
+          avatar_url: avatarUrl,
+        },
+        priority: 'low',
+        channel: 'in_app',
+      });
 
       res.json({
         success: true,

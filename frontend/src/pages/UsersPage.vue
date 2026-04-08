@@ -409,7 +409,7 @@ const users = ref([])
 const pagination = ref({ page: 1, limit: 10, total: 0, pages: 1 })
 const searchQuery = ref('')
 const roleFilter = ref('')
-const statusFilter = ref('')
+const statusFilter = ref('active')
 
 const selectedUser = ref(null)
 const showDetailsModal = ref(false)

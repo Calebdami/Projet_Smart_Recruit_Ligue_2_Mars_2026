@@ -38,8 +38,9 @@ class WebSocketMiddleware {
 
   async authenticateWebSocket(ws, token) {
     try {
+      const normalizedToken = typeof token === 'string' ? token.replace(/^Bearer\s+/i, '').trim() : token;
       // Verify JWT token
-      const payload = await this.verifyToken(token);
+      const payload = await this.verifyToken(normalizedToken);
       
       const userId = payload?.sub || payload?.id;
       if (!payload || !userId) {
@@ -184,7 +185,7 @@ class WebSocketMiddleware {
       const { verifyToken } = await import('../utils/auth.js');
       return verifyToken(token);
     } catch (error) {
-      console.error('Token verification error:', error);
+      console.warn('Token verification error:', error.message);
       return null;
     }
   }

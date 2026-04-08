@@ -115,10 +115,11 @@ class UsersController {
     // Get user profile
     static async getProfile(req, res) {
         try {
-            const userId = req.params.id || req.user.sub;
+            const currentUserId = req.user?.sub || req.user?.id;
+            const userId = req.params.id || currentUserId;
 
             // Check permissions - users can only view their own profile unless admin
-            if (req.user.role !== 'admin' && req.user.sub !== userId) {
+            if (req.user.role !== 'admin' && currentUserId !== userId) {
                 res.status(403).json({
                     success: false,
                     error: 'Access denied',
@@ -163,7 +164,7 @@ class UsersController {
                 action: 'view',
                 entity_type: 'user',
                 entity_id: user.id,
-                user_id: req.user.sub,
+                user_id: currentUserId,
                 ip_address: req.ip,
                 user_agent: req.get('User-Agent'),
             });
@@ -192,11 +193,12 @@ class UsersController {
     // Update user profile
     static async updateProfile(req, res) {
         try {
-            const userId = req.params.id || req.user.sub;
+            const currentUserId = req.user?.sub || req.user?.id;
+            const userId = req.params.id || currentUserId;
             const updates = req.body;
 
             // Check permissions - users can only update their own profile unless admin
-            if (req.user.role !== 'admin' && req.user.sub !== userId) {
+            if (req.user.role !== 'admin' && currentUserId !== userId) {
                 res.status(403).json({
                     success: false,
                     error: 'Access denied',
@@ -278,7 +280,7 @@ class UsersController {
                 action: 'update',
                 entity_type: 'user',
                 entity_id: userId,
-                user_id: req.user.sub,
+                user_id: currentUserId,
                 old_values: {
                     first_name: currentUser.first_name,
                     last_name: currentUser.last_name,
@@ -290,6 +292,20 @@ class UsersController {
                 new_values: updateData,
                 ip_address: req.ip,
                 user_agent: req.get('User-Agent'),
+            });
+
+            // Notify user about profile update (in-app)
+            await NotificationService.create({
+                userId: userId,
+                type: 'system_update',
+                title: 'Profil mis à jour',
+                message: 'Vos informations de profil ont été modifiées avec succès.',
+                data: {
+                    action: 'profile_update',
+                    changed_fields: Object.keys(updateData).filter((key) => key !== 'updated_at'),
+                },
+                priority: 'low',
+                channel: 'in_app',
             });
 
             res.json({
@@ -394,7 +410,7 @@ class UsersController {
                 action: 'list',
                 entity_type: 'user',
                 entity_id: isUUID(req.params.id) ? req.params.id : null,
-                user_id: req.user.sub,
+                user_id: (req.user?.sub || req.user?.id),
                 metadata: { filters: req.query },
                 ip_address: req.ip,
                 user_agent: req.get('User-Agent'),

@@ -20,8 +20,12 @@ const authenticate = async (req, res, next) => {
     
     try {
       const payload = verifyToken(token);
-      req.user = payload;
-      req.userId = payload.sub;
+      req.user = {
+        ...payload,
+        sub: payload.sub || payload.id,
+        id: payload.id || payload.sub,
+      };
+      req.userId = payload.sub || payload.id;
       req.userRole = payload.role;
       next();
     } catch (tokenError) {
@@ -51,8 +55,12 @@ const optionalAuthenticate = async (req, res, next) => {
       
       try {
         const payload = verifyToken(token);
-        req.user = payload;
-        req.userId = payload.sub;
+        req.user = {
+          ...payload,
+          sub: payload.sub || payload.id,
+          id: payload.id || payload.sub,
+        };
+        req.userId = payload.sub || payload.id;
         req.userRole = payload.role;
       } catch (tokenError) {
         // Token is invalid, but we don't fail the request
