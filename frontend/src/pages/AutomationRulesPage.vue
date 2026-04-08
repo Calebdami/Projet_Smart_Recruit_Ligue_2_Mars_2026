@@ -40,40 +40,94 @@
       + Nouvelle règle
     </button>
 
-    <!-- Create Modal (simplified) -->
-    <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div class="w-full max-w-lg rounded-2xl bg-white p-6 dark:bg-black">
-        <h2 class="mb-4 text-xl font-bold text-slate-900 dark:text-white">Nouvelle règle</h2>
-        <form class="space-y-4" @submit.prevent="createRule">
-          <div>
-            <label class="label-field">Nom</label>
-            <input v-model="newRule.name" type="text" required class="input-field" placeholder="ex: Notification nouvelle candidature">
+    <!-- Create Modal -->
+    <div
+      v-if="showCreateModal"
+      class="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 p-2 backdrop-blur-sm transition-all duration-300 sm:p-4"
+      @click.self="showCreateModal = false"
+    >
+      <div class="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white sm:text-xl">Nouvelle règle</h2>
+          <button
+            type="button"
+            class="rounded-xl p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-600 dark:hover:bg-slate-800 transition-all"
+            @click="showCreateModal = false"
+          >
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form @submit.prevent="createRule" class="flex flex-col max-h-[80vh]">
+          <div class="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin">
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Nom de la règle</label>
+              <input 
+                v-model="newRule.name" 
+                type="text" 
+                required 
+                class="input-field w-full py-2.5" 
+                placeholder="ex: Notification nouvelle candidature"
+              >
+            </div>
+            
+            <div class="space-y-1.5">
+              <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Description</label>
+              <textarea 
+                v-model="newRule.description" 
+                rows="2"
+                class="input-field w-full py-2.5 resize-none"
+                placeholder="Décrivez l'objectif de cette règle..."
+              ></textarea>
+            </div>
+
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Événement (Si)</label>
+                <select v-model="newRule.trigger" class="input-field w-full py-2.5">
+                  <option value="application_received">Candidature reçue</option>
+                  <option value="status_changed">Statut modifié</option>
+                  <option value="interview_scheduled">Entretien prévu</option>
+                  <option value="candidate_hired">Candidat recruté</option>
+                </select>
+              </div>
+              
+              <div class="space-y-1.5">
+                <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Action (Alors)</label>
+                <select v-model="newRule.action" class="input-field w-full py-2.5">
+                  <option value="send_email">Envoyer email</option>
+                  <option value="assign_recruiter">Assigner recruteur</option>
+                  <option value="notify_slack">Notifier Slack</option>
+                  <option value="create_task">Créer tâche</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="rounded-xl bg-slate-50 p-4 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 mt-4">
+              <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed italic">
+                La règle sera activée immédiatement après sa création. Vous pourrez la désactiver à tout moment depuis la liste.
+              </p>
+            </div>
           </div>
-          <div>
-            <label class="label-field">Description</label>
-            <input v-model="newRule.description" type="text" class="input-field">
-          </div>
-          <div>
-            <label class="label-field">Condition (quand)</label>
-            <select v-model="newRule.trigger" class="input-field">
-              <option value="application_received">Nouvelle candidature reçue</option>
-              <option value="status_changed">Changement de statut</option>
-              <option value="interview_scheduled">Entretien planifié</option>
-              <option value="candidate_hired">Candidat embauché</option>
-            </select>
-          </div>
-          <div>
-            <label class="label-field">Action (alors)</label>
-            <select v-model="newRule.action" class="input-field">
-              <option value="send_email">Envoyer email</option>
-              <option value="assign_recruiter">Assigner recruteur</option>
-              <option value="notify_slack">Notifier Slack</option>
-              <option value="create_task">Créer tâche</option>
-            </select>
-          </div>
-          <div class="flex gap-3 pt-4">
-            <button type="button" class="btn-secondary flex-1" @click="showCreateModal = false">Annuler</button>
-            <button type="submit" class="btn-primary flex-1">Créer</button>
+
+          <!-- Modal Footer -->
+          <div class="border-t border-slate-100 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-900 flex flex-col sm:flex-row gap-3">
+            <button 
+              type="button" 
+              class="btn-secondary w-full sm:flex-1 justify-center py-2.5" 
+              @click="showCreateModal = false"
+            >
+              Annuler
+            </button>
+            <button 
+              type="submit" 
+              class="btn-primary w-full sm:flex-1 justify-center py-2.5 shadow-lg shadow-brand-500/20"
+            >
+              Créer la règle
+            </button>
           </div>
         </form>
       </div>

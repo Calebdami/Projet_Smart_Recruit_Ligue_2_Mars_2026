@@ -2,6 +2,7 @@ import { ref, reactive } from 'vue'
 
 // Global state
 const notifications = ref([])
+const isSidebarOpen = ref(false)
 const confirmModal = reactive({
   show: false,
   type: 'warning',
@@ -19,6 +20,15 @@ const confirmModal = reactive({
 let notificationId = 0
 
 export function useUI() {
+  // Sidebar
+  const toggleSidebar = () => {
+    isSidebarOpen.value = !isSidebarOpen.value
+  }
+
+  const closeSidebar = () => {
+    isSidebarOpen.value = false
+  }
+
   // Notifications
   const addNotification = (notification) => {
     const merged = {
@@ -174,8 +184,13 @@ export function useUI() {
 
   return {
     // State
+    isSidebarOpen,
     notifications,
     confirmModal,
+
+    // Sidebar
+    toggleSidebar,
+    closeSidebar,
 
     // Notifications
     addNotification,

@@ -1,11 +1,7 @@
 <template>
-  <div class="mesh-bg -mx-4 -mt-6 min-h-full px-4 pb-16 pt-6 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-    <div class="mx-auto w-full px-4 lg:px-8">
+  <div class="mesh-bg min-h-full pb-16 pt-4">
+    <div class="relative z-0 w-full px-4 lg:px-2">
       <header class="mb-10 animate-fade-in-up sm:mb-14">
-        <p class="mb-3 inline-flex items-center gap-2 rounded-full border border-brand-200/80 bg-brand-50/80 px-3 py-1 text-xs font-bold uppercase tracking-widest text-brand-700 dark:border-brand-500/30 dark:bg-brand-950/40 dark:text-brand-300">
-          <span class="h-1.5 w-1.5 rounded-full bg-accent-500" />
-          
-        </p>
         <h1 class="max-w-3xl text-4xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
           Bienvenue sur
           <span class="text-gradient-brand">SmartRecruit</span>
@@ -15,7 +11,7 @@
         </p>
       </header>
 
-      <div class="stagger-children mb-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
+      <div class="stagger-children mb-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-8">
         <article
           v-for="(stat, index) in stats"
           :key="stat.label"
@@ -41,16 +37,16 @@
         </article>
       </div>
 
-      <div class="stagger-children mb-12 grid grid-cols-1 gap-5 lg:grid-cols-3">
+      <div class="stagger-children mb-12 grid grid-cols-1 gap-8 lg:grid-cols-3">
         <router-link
           v-if="$can('view_users')"
           to="/users"
-          class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 to-slate-950 p-8 text-white shadow-xl ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-0.5 dark:from-slate-700 dark:to-slate-900"
+          class="card-elevated-hover group relative overflow-hidden p-6 transition-all duration-300 hover:-translate-y-0.5"
         >
-          <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'0.06\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] opacity-80" />
-          <div class="relative">
-            <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
-              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%234f46e5\' fill-opacity=\'0.03\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')] dark:opacity-20" />
+          <div class="relative flex items-center gap-5">
+            <div class="inline-flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-brand-500/10 text-brand-600 ring-1 ring-brand-500/20 dark:bg-brand-500/20 dark:text-brand-400 dark:ring-brand-500/30">
+              <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -59,25 +55,24 @@
                 />
               </svg>
             </div>
-            <h3 class="text-xl font-bold">Utilisateurs</h3>
-            <p class="mt-2 text-sm leading-relaxed text-brand-100">Rôles, accès et permissions centralisés.</p>
-            <span class="mt-6 inline-flex items-center gap-2 text-sm font-semibold">
-              Ouvrir
-              <svg class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </span>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-xl font-bold text-slate-900 dark:text-white">Utilisateurs</h3>
+              <p class="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">Gérez les rôles et permissions.</p>
+            </div>
+            <svg class="h-5 w-5 text-slate-400 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
           </div>
         </router-link>
 
         <router-link
           v-if="$can('view_audit_logs')"
           to="/audit"
-          class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 to-slate-950 p-8 text-white shadow-xl ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-0.5 dark:from-slate-700 dark:to-slate-900"
+          class="card-elevated-hover group relative overflow-hidden p-6 transition-all duration-300 hover:-translate-y-0.5"
         >
-          <div class="relative">
-            <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/25">
-              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="relative flex items-center gap-5">
+            <div class="inline-flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-accent-500/10 text-accent-600 ring-1 ring-accent-500/20 dark:bg-accent-500/20 dark:text-accent-400 dark:ring-accent-500/30">
+              <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -86,25 +81,24 @@
                 />
               </svg>
             </div>
-            <h3 class="text-xl font-bold">Journal d’audit</h3>
-            <p class="mt-2 text-sm leading-relaxed text-accent-100">Traçabilité des actions sensibles.</p>
-            <span class="mt-6 inline-flex items-center gap-2 text-sm font-semibold">
-              Consulter
-              <svg class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </span>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-xl font-bold text-slate-900 dark:text-white">Journal d’audit</h3>
+              <p class="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">Traçabilité des actions sensibles.</p>
+            </div>
+            <svg class="h-5 w-5 text-slate-400 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
           </div>
         </router-link>
 
         <router-link
           v-if="$can('view_analytics')"
           to="/analytics"
-          class="group relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-800 to-slate-950 p-8 text-white shadow-xl ring-1 ring-white/10 transition-all duration-300 hover:-translate-y-0.5 dark:from-slate-700 dark:to-slate-900"
+          class="card-elevated-hover group relative overflow-hidden p-6 transition-all duration-300 hover:-translate-y-0.5"
         >
-          <div class="relative">
-            <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 ring-1 ring-white/20">
-              <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="relative flex items-center gap-5">
+            <div class="inline-flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20 dark:bg-emerald-500/20 dark:text-emerald-400 dark:ring-emerald-500/30">
+              <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
@@ -113,111 +107,16 @@
                 />
               </svg>
             </div>
-            <h3 class="text-xl font-bold">Analytique</h3>
-            <p class="mt-2 text-sm leading-relaxed text-slate-400">Indicateurs clés pour vos décisions RH.</p>
-            <span class="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-white">
-              Voir les stats
-              <svg class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </span>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-xl font-bold text-slate-900 dark:text-white">Analytique</h3>
+              <p class="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">Indicateurs clés et statistiques.</p>
+            </div>
+            <svg class="h-5 w-5 text-slate-400 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
           </div>
         </router-link>
       </div>
-
-      <div class="card-elevated mb-16 max-w-3xl p-8 animate-fade-in-up">
-        <div class="flex flex-col gap-8 sm:flex-row sm:items-center">
-          <div class="relative flex-shrink-0">
-            <img
-              v-if="user?.avatar_url"
-              :src="user.avatar_url"
-              :alt="user.first_name"
-              class="h-28 w-28 rounded-2xl object-cover shadow-lg ring-4 ring-brand-100 dark:ring-brand-900/50"
-            >
-            <div
-              v-else
-              class="flex h-28 w-28 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-600 text-3xl font-bold text-white shadow-lg ring-4 ring-brand-100 dark:ring-brand-900/50"
-            >
-              {{ user?.first_name?.charAt(0) }}{{ user?.last_name?.charAt(0) }}
-            </div>
-            <div
-              class="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-4 border-white bg-emerald-500 dark:border-slate-900"
-            />
-          </div>
-          <div class="min-w-0 flex-1">
-            <h3 class="text-2xl font-bold text-slate-900 dark:text-white">
-              {{ user?.first_name }} {{ user?.last_name }}
-            </h3>
-            <p class="mt-1 text-slate-600 dark:text-slate-400">{{ user?.email }}</p>
-            <div class="mt-4 flex flex-wrap items-center gap-3">
-              <span
-                class="inline-flex items-center rounded-full bg-brand-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-brand-800 dark:bg-brand-950/60 dark:text-brand-200"
-              >
-                {{ user?.role }}
-              </span>
-              <span class="text-sm text-slate-500 dark:text-slate-500">Dernière connexion : {{ formatDate(user?.last_login_at) }}</span>
-            </div>
-            <router-link
-              to="/profile"
-              class="btn-secondary mt-6 inline-flex"
-            >
-              Modifier le profil
-            </router-link>
-          </div>
-        </div>
-      </div>
-
-      <!-- Test Notifications Section (Development Only) -->
-      <!-- <section v-if="isDev" class="animate-fade-in-up mb-12">
-        <div class="mb-6 text-center">
-          <h2 class="text-xl font-bold text-slate-900 dark:text-white">🧪 Test des Notifications</h2>
-          <p class="mx-auto mt-1 max-w-md text-sm text-slate-600 dark:text-slate-400">Cliquez sur les boutons pour tester le système de notifications</p>
-        </div>
-        <div class="flex flex-wrap justify-center gap-3">
-          <button
-            @click="testNotification('success')"
-            class="btn-success"
-          >
-            ✅ Succès
-          </button>
-          <button
-            @click="testNotification('error')"
-            class="btn-error"
-          >
-            ❌ Erreur
-          </button>
-          <button
-            @click="testNotification('warning')"
-            class="btn-warning"
-          >
-            ⚠️ Avertissement
-          </button>
-          <button
-            @click="testNotification('info')"
-            class="btn-info"
-          >
-            ℹ️ Information
-          </button>
-          <button
-            @click="testNotification('connection')"
-            class="btn-secondary"
-          >
-            🔗 Connexion
-          </button>
-          <button
-            @click="testNotification('update')"
-            class="btn-primary"
-          >
-            🔄 Mise à jour
-          </button>
-          <button
-            @click="testApiError"
-            class="btn-error"
-          >
-            🚫 Test API Error
-          </button>
-        </div>
-      </section> -->
 
       <section class="animate-fade-in-up">
         <div class="mb-10 text-center">

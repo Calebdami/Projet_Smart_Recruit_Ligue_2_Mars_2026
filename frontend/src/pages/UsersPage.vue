@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-7xl animate-fade-in-up">
+  <div class="animate-fade-in-up">
     <div class="table-shell mb-6 overflow-hidden">
       <div class="panel-header flex flex-col gap-4 bg-gradient-to-r from-white to-slate-50/80 dark:from-slate-900 dark:to-slate-900 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -15,8 +15,8 @@
       </div>
 
       <div class="border-b border-slate-200/80 px-4 py-4 dark:border-slate-700 sm:px-6">
-        <div class="flex flex-wrap gap-3">
-          <div class="relative min-w-[200px] flex-1">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div class="relative w-full sm:flex-1">
             <svg
               class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
               fill="none"
@@ -32,23 +32,26 @@
             </svg>
             <input v-model="searchQuery" type="search" placeholder="Rechercher…" class="input-field !py-2.5 pl-10">
           </div>
-          <select v-model="roleFilter" class="input-field max-w-[160px] !py-2.5">
-            <option value="">Tous les rôles</option>
-            <option value="admin">Admin</option>
-            <option value="recruiter">Recruteur</option>
-            <option value="candidate">Candidat</option>
-          </select>
-          <select v-model="statusFilter" class="input-field max-w-[160px] !py-2.5">
-            <option value="">Tous les statuts</option>
-            <option value="active">Actif</option>
-            <option value="inactive">Inactif</option>
-          </select>
+          <div class="flex items-center gap-3">
+            <select v-model="roleFilter" class="input-field flex-1 !py-2.5 sm:max-w-[160px]">
+              <option value="">Tous les rôles</option>
+              <option value="admin">Admin</option>
+              <option value="recruiter">Recruteur</option>
+              <option value="candidate">Candidat</option>
+            </select>
+            <select v-model="statusFilter" class="input-field flex-1 !py-2.5 sm:max-w-[160px]">
+              <option value="">Tous les statuts</option>
+              <option value="active">Actif</option>
+              <option value="inactive">Inactif</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
 
     <div class="table-shell overflow-hidden">
-      <div class="overflow-x-auto">
+      <!-- Desktop/Tablet Table View -->
+      <div class="hidden overflow-x-auto md:block">
         <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
           <thead class="bg-slate-50/90 dark:bg-slate-800/50">
             <tr>
@@ -154,15 +157,84 @@
         </table>
       </div>
 
+      <!-- Mobile Card View -->
+      <div class="grid grid-cols-1 divide-y divide-slate-100 dark:divide-slate-800 md:hidden">
+        <div
+          v-for="user in users"
+          :key="user.id"
+          class="p-4 transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40"
+        >
+          <div class="flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div
+                class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white"
+              >
+                {{ user.first_name?.charAt(0) }}{{ user.last_name?.charAt(0) }}
+              </div>
+              <div class="min-w-0">
+                <div class="truncate font-medium text-slate-900 dark:text-white">
+                  {{ user.first_name }} {{ user.last_name }}
+                </div>
+                <div class="truncate text-xs text-slate-500 dark:text-slate-400">{{ user.email }}</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                @click="viewUserDetails(user)"
+              >
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-rose-600 dark:border-slate-700 dark:bg-slate-900 dark:text-rose-400"
+                @click="handleDeleteUser(user)"
+              >
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="mt-4 flex items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span
+                class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize"
+                :class="getRoleClass(user.role)"
+              >
+                {{ user.role }}
+              </span>
+              <span
+                class="inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize"
+                :class="
+                  user.is_active
+                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300'
+                    : 'bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300'
+                "
+              >
+                {{ user.is_active ? 'Actif' : 'Inactif' }}
+              </span>
+            </div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400">
+              Vu: {{ formatDate(user.last_login_at) }}
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Pagination -->
       <div class="border-t border-slate-200/80 px-4 py-4 dark:border-slate-700 sm:px-6">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col items-center justify-between gap-4 sm:flex-row">
           <div class="text-sm text-slate-500 dark:text-slate-400">
             Affichage de <span class="font-medium">{{ (pagination.page - 1) * pagination.limit + 1 }}</span> à 
             <span class="font-medium">{{ Math.min(pagination.page * pagination.limit, pagination.total) }}</span> sur 
             <span class="font-medium">{{ pagination.total }}</span> utilisateurs
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center justify-center gap-2">
             <button
               :disabled="pagination.page === 1 || loading"
               class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
@@ -170,7 +242,7 @@
             >
               Précédent
             </button>
-            <div class="flex items-center gap-1">
+            <div class="hidden items-center gap-1 sm:flex">
               <button
                 v-for="page in pagination.pages"
                 :key="page"
@@ -184,6 +256,10 @@
               >
                 {{ page }}
               </button>
+            </div>
+            <!-- Mobile current page indicator -->
+            <div class="flex items-center px-2 text-sm font-medium text-slate-700 dark:text-slate-300 sm:hidden">
+              Page {{ pagination.page }} sur {{ pagination.pages }}
             </div>
             <button
               :disabled="pagination.page === pagination.pages || loading"
@@ -200,15 +276,16 @@
     <!-- User Details Modal -->
     <div
       v-if="showDetailsModal && selectedUser"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      class="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 p-2 backdrop-blur-sm transition-all duration-300 sm:p-4"
       @click.self="closeDetailsModal"
     >
-      <div class="mx-4 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+      <div class="w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-700 animate-in zoom-in-95 duration-200">
+        <!-- Simple Header -->
         <div class="sticky top-0 z-10 flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
           <h2 class="text-xl font-bold text-slate-900 dark:text-white">Détails de l'utilisateur</h2>
           <button
             type="button"
-            class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800"
+            class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 transition-colors"
             @click="closeDetailsModal"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,90 +294,102 @@
           </button>
         </div>
 
-        <div class="p-6 space-y-6">
+        <div class="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin">
           <!-- Basic Info -->
-          <div class="flex items-center gap-4">
-            <div
-              class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-xl font-bold text-white"
-            >
-              {{ selectedUser.first_name?.charAt(0) }}{{ selectedUser.last_name?.charAt(0) }}
+          <div class="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
+            <div class="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-brand-700 text-xl font-bold text-white shadow-lg sm:h-20 sm:w-20">
+              {{ selectedUser.first_name?.[0] }}{{ selectedUser.last_name?.[0] }}
+              <div v-if="selectedUser.is_active" class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900"></div>
             </div>
-            <div>
-              <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+            <div class="min-w-0 flex-1">
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white truncate">
                 {{ selectedUser.first_name }} {{ selectedUser.last_name }}
               </h3>
-              <p class="text-slate-500 dark:text-slate-400">{{ selectedUser.email }}</p>
-              <div class="mt-1 flex items-center gap-2">
-                <span
-                  class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize"
-                  :class="getRoleClass(selectedUser.role)"
-                >
+              <p class="text-sm text-slate-500 dark:text-slate-400 truncate">{{ selectedUser.email }}</p>
+              <div class="mt-3 flex flex-wrap justify-center sm:justify-start gap-2">
+                <span class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold capitalize" :class="getRoleClass(selectedUser.role)">
                   {{ selectedUser.role }}
                 </span>
-                
+                <span 
+                  class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                  :class="selectedUser.is_active ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-800 dark:bg-rose-950/30 dark:text-rose-400'"
+                >
+                  {{ selectedUser.is_active ? 'Actif' : 'Inactif' }}
+                </span>
               </div>
             </div>
           </div>
 
-          <!-- All Details Grid -->
+          <!-- Details Grid -->
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-              <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">ID</label>
-              <p class="mt-1 text-sm text-slate-900 dark:text-white font-mono">{{ selectedUser.id }}</p>
+            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+              <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">ID Unique</label>
+              <p class="mt-1 text-xs text-slate-900 dark:text-white font-mono break-all">{{ selectedUser.id }}</p>
             </div>
-            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-              <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Téléphone</label>
+            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+              <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Téléphone</label>
               <p class="mt-1 text-sm text-slate-900 dark:text-white">{{ selectedUser.phone || 'Non renseigné' }}</p>
             </div>
-            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-              <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Email vérifié</label>
+            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+              <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Email vérifié</label>
               <p class="mt-1 text-sm text-slate-900 dark:text-white">{{ selectedUser.email_verified ? 'Oui' : 'Non' }}</p>
             </div>
-            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-              <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">2FA activé</label>
+            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+              <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">2FA Activé</label>
               <p class="mt-1 text-sm text-slate-900 dark:text-white">{{ selectedUser.two_factor_enabled ? 'Oui' : 'Non' }}</p>
             </div>
-            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-              <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Date de création</label>
+            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+              <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Création</label>
               <p class="mt-1 text-sm text-slate-900 dark:text-white">{{ formatDate(selectedUser.created_at) }}</p>
             </div>
-            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-              <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dernière mise à jour</label>
+            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+              <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dernière MAJ</label>
               <p class="mt-1 text-sm text-slate-900 dark:text-white">{{ formatDate(selectedUser.updated_at) }}</p>
             </div>
-            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-              <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dernière connexion</label>
+            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+              <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dernière connexion</label>
               <p class="mt-1 text-sm text-slate-900 dark:text-white">{{ formatDate(selectedUser.last_login_at) }}</p>
             </div>
-            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-              <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">IP dernière connexion</label>
+            <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+              <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">IP de connexion</label>
               <p class="mt-1 text-sm text-slate-900 dark:text-white font-mono">{{ selectedUser.last_login_ip || 'N/A' }}</p>
             </div>
           </div>
 
           <!-- Preferences -->
-          <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-            <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Préférences</label>
-            <pre class="mt-2 overflow-x-auto rounded-lg bg-slate-100 p-3 text-xs text-slate-700 dark:bg-slate-800 dark:text-slate-300">{{ JSON.stringify(selectedUser.preferences, null, 2) }}</pre>
+          <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Préférences</label>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <template v-if="selectedUser.preferences && Object.keys(selectedUser.preferences).length > 0">
+                <div 
+                  v-for="(value, key) in selectedUser.preferences" 
+                  :key="key"
+                  class="flex items-center gap-2 rounded-lg bg-white dark:bg-slate-800 px-3 py-1.5 text-xs border border-slate-100 dark:border-slate-700 shadow-sm"
+                >
+                  <span class="font-semibold text-slate-500">{{ key }}:</span>
+                  <span class="ml-1 text-slate-900 dark:text-white">{{ value }}</span>
+                </div>
+              </template>
+              <p v-else class="text-sm text-slate-400 italic">Aucune préférence définie</p>
+            </div>
           </div>
 
-          <!-- Avatar URL -->
-          <div v-if="selectedUser.avatar_url" class="rounded-xl border border-slate-200 p-4 dark:border-slate-700">
-            <label class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">URL Avatar</label>
-            <p class="mt-1 text-sm text-slate-900 dark:text-white break-all">{{ selectedUser.avatar_url }}</p>
+          <!-- Avatar URL if exists -->
+          <div v-if="selectedUser.avatar_url" class="rounded-xl border border-slate-200 p-4 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30">
+            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">URL Avatar</label>
+            <p class="mt-1 text-xs text-slate-900 dark:text-white break-all">{{ selectedUser.avatar_url }}</p>
           </div>
         </div>
 
-        <div class="sticky bottom-0 border-t border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900">
-          <div class="flex justify-end gap-3">
-            <button
-              type="button"
-              class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200"
-              @click="closeDetailsModal"
-            >
-              Fermer
-            </button>
-          </div>
+        <!-- Footer -->
+        <div class="sticky bottom-0 border-t border-slate-200 bg-white px-6 py-4 dark:border-slate-700 dark:bg-slate-900 flex justify-end">
+          <button
+            type="button"
+            class="w-full sm:w-auto rounded-xl bg-slate-100 px-6 py-2 text-sm font-bold text-slate-600 transition-all hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            @click="closeDetailsModal"
+          >
+            Fermer
+          </button>
         </div>
       </div>
     </div>
@@ -448,3 +537,46 @@ onMounted(() => {
   loadUsers()
 })
 </script>
+
+<style scoped>
+.spec-card {
+  @apply rounded-2xl border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/40 shadow-sm;
+}
+
+.spec-label {
+  @apply text-[10px] font-black uppercase tracking-wider text-slate-400 block mb-1;
+}
+
+.spec-value {
+  @apply text-sm font-bold text-slate-900 dark:text-white;
+}
+
+.timestamp-box {
+  @apply p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800;
+}
+
+.timestamp-label {
+  @apply text-[10px] font-bold text-slate-400 uppercase tracking-tight block mb-1;
+}
+
+.timestamp-value {
+  @apply text-xs font-black text-slate-700 dark:text-slate-300;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full dark:bg-slate-800;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-300 dark:bg-slate-700;
+}
+</style>

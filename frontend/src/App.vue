@@ -1,8 +1,13 @@
 <template>
   <div
     id="app"
-    class="min-h-screen bg-gradient-to-br from-slate-50 via-white to-accent-50/30 text-slate-900 transition-colors duration-300 dark:from-black dark:via-black dark:to-black dark:text-slate-100 mesh-bg"
+    class="relative min-h-screen text-slate-900 transition-colors duration-500 dark:text-slate-100 overflow-x-hidden"
   >
+    <!-- Dynamic Background Layer -->
+    <div class="fixed inset-0 -z-10 transition-all duration-700 ease-in-out bg-slate-50 dark:bg-black">
+      <div class="absolute inset-0 mesh-bg opacity-70 dark:opacity-40 transition-opacity duration-700"></div>
+    </div>
+
     <!-- Global Toast Notifications -->
     <NotificationToast />
 

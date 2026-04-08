@@ -1,23 +1,45 @@
 <template>
+  <!-- Backdrop for mobile -->
+  <transition name="fade">
+    <div
+      v-if="isSidebarOpen"
+      class="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-sm lg:hidden"
+      @click="closeSidebar"
+    />
+  </transition>
+
   <aside
-    class="fixed left-0 top-0 z-50 flex h-full w-72 flex-col border-r border-slate-800/80 bg-gradient-to-b from-black via-black to-black text-white shadow-2xl"
+    :class="[
+      'fixed left-0 top-0 z-[130] flex h-full w-72 flex-col border-r border-slate-200 bg-white shadow-2xl transition-all duration-300 dark:border-slate-800/80 dark:bg-black lg:translate-x-0',
+      isSidebarOpen ? 'translate-x-0' : '-translate-x-full',
+    ]"
   >
-    <div class="border-b border-slate-800/80 px-5 py-7">
-      <router-link to="/" class="group flex items-center gap-3">
+    <div class="flex items-center justify-between border-b border-slate-100 px-5 py-5 dark:border-slate-800/80 sm:px-6 sm:py-7">
+      <router-link to="/" class="group flex items-center gap-3" @click="closeSidebar">
         <div
-          class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 text-sm font-bold shadow-lg transition-transform duration-300 group-hover:scale-105"
+          class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 text-sm font-bold text-white shadow-lg transition-transform duration-300 group-hover:scale-105"
         >
           SR
         </div>
         <div class="min-w-0">
           <span
-            class="block truncate text-lg font-bold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent"
+            class="block truncate text-lg font-bold tracking-tight text-slate-900 dark:bg-gradient-to-r dark:from-white dark:to-slate-300 dark:bg-clip-text dark:text-transparent"
           >
             SmartRecruit
           </span>
-          <span class="text-[10px] font-semibold uppercase tracking-widest text-accent-400/90">Talent Suite</span>
+          <span class="text-[10px] font-semibold uppercase tracking-widest text-brand-600 dark:text-accent-400/90">Talent Suite</span>
         </div>
       </router-link>
+
+      <button
+        type="button"
+        class="rounded-lg p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 lg:hidden"
+        @click="closeSidebar"
+      >
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
 
     <nav class="scrollbar-thin flex-1 space-y-1 overflow-y-auto px-3 py-5">
@@ -28,20 +50,21 @@
           :class="[
             'group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300',
             isActive(item.to, item.exact)
-              ? 'bg-gradient-to-r from-brand-600/25 to-accent-600/10 text-white shadow-inner ring-1 ring-brand-500/30'
-              : 'text-slate-400 hover:bg-slate-800/60 hover:text-white',
+              ? 'bg-brand-50 text-brand-700 shadow-sm ring-1 ring-brand-200 dark:bg-gradient-to-r dark:from-brand-600/25 dark:to-accent-600/10 dark:text-white dark:shadow-inner dark:ring-brand-500/30'
+              : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-white',
           ]"
+          @click="closeSidebar"
         >
           <span
             v-if="isActive(item.to, item.exact)"
-            class="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-brand-400 to-accent-400"
+            class="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-gradient-to-b from-brand-500 to-accent-500"
           />
           <span
             :class="[
               'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-300',
               isActive(item.to, item.exact)
-                ? 'bg-brand-500/20 text-brand-300'
-                : 'bg-slate-800/50 text-slate-500 group-hover:bg-slate-700/80 group-hover:text-slate-200',
+                ? 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300'
+                : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600 dark:bg-slate-800/50 dark:text-slate-500 dark:group-hover:bg-slate-700/80 dark:group-hover:text-slate-200',
             ]"
           >
             <component :is="item.icon" class="h-5 w-5" />
@@ -50,25 +73,25 @@
           <span
             v-if="item.badge"
             class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
-            :class="item.badgeColor || 'bg-brand-500/25 text-brand-200'"
+            :class="item.badgeColor || 'bg-brand-100 text-brand-700 dark:bg-brand-500/25 dark:text-brand-200'"
           >
             {{ item.badge }}
           </span>
         </router-link>
 
-        <div v-if="item.divider" class="my-4 border-t border-slate-800/80" />
+        <div v-if="item.divider" class="my-4 border-t border-slate-100 dark:border-slate-800/80" />
       </div>
     </nav>
 
-    <div class="relative border-t border-slate-800/80 p-4">
+    <div class="relative border-t border-slate-100 p-4 dark:border-slate-800/80">
       <div class="mb-3 flex items-center justify-between px-1">
-        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Apparence</span>
+        <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">Apparence</span>
         <ThemeToggle />
       </div>
 
       <button
         type="button"
-        class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-slate-800/80"
+        class="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/80"
         @click="toggleUserMenu"
       >
         <div class="relative flex-shrink-0">
@@ -76,24 +99,24 @@
             v-if="user?.avatar_url"
             :src="user.avatar_url"
             :alt="user.first_name"
-            class="h-10 w-10 rounded-xl object-cover ring-2 ring-brand-500/40"
+            class="h-10 w-10 rounded-xl object-cover ring-2 ring-brand-500/20 dark:ring-brand-500/40"
           >
           <div
             v-else
-            class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-600 text-sm font-bold"
+            class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-600 text-sm font-bold text-white"
           >
             {{ user?.first_name?.charAt(0) }}{{ user?.last_name?.charAt(0) }}
           </div>
           <div
-            class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-slate-900 bg-emerald-500"
+            class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900"
           />
         </div>
         <div class="min-w-0 flex-1">
-          <p class="truncate text-sm font-semibold">{{ user?.first_name }}</p>
-          <p class="truncate text-xs capitalize text-slate-500">{{ user?.role }}</p>
+          <p class="truncate text-sm font-semibold text-slate-900 dark:text-white">{{ user?.first_name }}</p>
+          <p class="truncate text-xs capitalize text-slate-500 dark:text-slate-400">{{ user?.role }}</p>
         </div>
         <svg
-          :class="['h-4 w-4 flex-shrink-0 text-slate-500 transition-transform', userMenuOpen ? 'rotate-180' : '']"
+          :class="['h-4 w-4 flex-shrink-0 text-slate-400 transition-transform dark:text-slate-500', userMenuOpen ? 'rotate-180' : '']"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -105,14 +128,14 @@
       <transition name="slide-up">
         <div
           v-if="userMenuOpen"
-          class="absolute inset-x-4 bottom-full mb-2 overflow-hidden rounded-xl border border-slate-700 bg-slate-800/95 shadow-xl backdrop-blur-md"
+          class="absolute inset-x-4 bottom-full mb-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl backdrop-blur-md dark:border-slate-700 dark:bg-slate-800/95"
         >
           <router-link
             to="/profile"
-            class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-300 transition-colors hover:bg-slate-700/80 hover:text-white"
+            class="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-700/80 dark:hover:text-white"
             @click="userMenuOpen = false"
           >
-            <svg class="h-4 w-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-4 w-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -124,7 +147,7 @@
           </router-link>
           <button
             type="button"
-            class="flex w-full items-center gap-2 border-t border-slate-700/80 px-4 py-2.5 text-sm text-rose-400 transition-colors hover:bg-rose-500/10"
+            class="flex w-full items-center gap-2 border-t border-slate-100 px-4 py-2.5 text-sm text-rose-600 transition-colors hover:bg-rose-50 dark:border-slate-700/80 dark:text-rose-400 dark:hover:bg-rose-500/10"
             @click="handleLogout"
           >
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,7 +180,7 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const { logout } = useAuth()
-const ui = useUI()
+const { isSidebarOpen, closeSidebar, ...ui } = useUI()
 const userMenuOpen = ref(false)
 
 const user = computed(() => authStore.user)
@@ -258,5 +281,14 @@ const handleLogout = async () => {
 .slide-up-leave-to {
   opacity: 0;
   transform: translateY(8px);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

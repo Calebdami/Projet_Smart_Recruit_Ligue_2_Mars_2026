@@ -1,12 +1,12 @@
 <template>
   <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Assignation des Candidats</h1>
         <p class="text-sm text-slate-600 dark:text-slate-400">Assignez les candidats aux recruteurs via drag & drop.</p>
       </div>
-      <div class="flex items-center gap-3">
-        <button class="btn-secondary text-sm" :disabled="loading" @click="loadData">
+      <div class="flex flex-wrap items-center gap-3">
+        <button class="btn-secondary flex-1 sm:flex-none text-sm whitespace-nowrap" :disabled="loading" @click="loadData">
           <svg class="mr-1 inline h-4 w-4" :class="{ 'animate-spin': loading }" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
@@ -14,21 +14,21 @@
         </button>
         <button
           v-if="selectedCandidates.length > 0"
-          class="btn-primary text-sm"
+          class="btn-primary flex-1 sm:flex-none text-sm whitespace-nowrap"
           :disabled="bulkAssigning"
           @click="showBulkAssignModal = true"
         >
           <svg v-if="bulkAssigning" class="mr-1 inline h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
-          Assigner {{ selectedCandidates.length }} candidat(s)
+          Assigner ({{ selectedCandidates.length }})
         </button>
       </div>
     </div>
 
     <!-- Filters -->
     <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-black">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <input v-model="filters.search" type="text" placeholder="Nom, Email..." class="input-field" @input="debouncedSearch">
         <select v-model="filters.job_id" class="input-field" @change="loadData">
           <option value="">Toutes les offres</option>
@@ -75,8 +75,8 @@
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
       <!-- Unassigned Candidates -->
       <div class="lg:col-span-2">
-        <div class="rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-black">
-          <div class="border-b border-slate-200 p-4 dark:border-slate-700">
+        <div class="rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-black flex flex-col h-[500px] lg:h-[600px]">
+          <div class="border-b border-slate-200 p-4 dark:border-slate-700 shrink-0">
             <div class="flex items-center justify-between">
               <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Candidats non assignés</h3>
               <button
@@ -84,20 +84,20 @@
                 @click="clearSelection"
                 class="text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
               >
-                Désélectionner tout
+                Désélectionner
               </button>
             </div>
           </div>
-          <div class="p-4">
+          <div class="p-4 overflow-hidden flex-1">
             <div
               v-if="filteredUnassignedCandidates.length === 0"
-              class="py-8 text-center text-slate-500"
+              class="h-full flex items-center justify-center text-slate-500"
             >
-              Aucun candidat non assigné trouvé.
+              Aucun candidat trouvé.
             </div>
             <div
               v-else
-              class="space-y-3 max-h-96 overflow-y-auto"
+              class="space-y-3 h-full overflow-y-auto pr-2 custom-scrollbar"
               @dragover.prevent
               @drop.prevent="onDropToUnassigned"
             >
@@ -143,11 +143,11 @@
 
       <!-- Recruiters -->
       <div class="lg:col-span-2">
-        <div class="space-y-4 max-h-[600px] overflow-y-auto">
+        <div class="space-y-4 h-[500px] lg:h-[600px] overflow-y-auto pr-2 custom-scrollbar">
           <div
             v-for="recruiter in recruiters"
             :key="recruiter.id"
-            class="recruiter-drop-zone"
+            class="recruiter-drop-zone shrink-0"
             @dragover.prevent
             @drop.prevent="onDropToRecruiter($event, recruiter.id)"
           >
@@ -165,9 +165,18 @@
                       <p class="text-sm text-slate-500">{{ assignedCandidates[recruiter.id]?.length || 0 }} candidat(s)</p>
                     </div>
                   </div>
-                  <div class="text-right">
-                    <p class="text-sm font-medium text-slate-900 dark:text-white">{{ recruiter.email }}</p>
-                    <p class="text-xs text-slate-500">{{ recruiter.role }}</p>
+                  <div class="flex items-center gap-2">
+                    <button 
+                      v-if="selectedCandidates.length > 0"
+                      @click="assignSelectedToRecruiter(recruiter.id)"
+                      class="lg:hidden btn-primary text-xs py-1.5"
+                    >
+                      Assigner ici
+                    </button>
+                    <div class="hidden sm:block text-right">
+                      <p class="text-sm font-medium text-slate-900 dark:text-white">{{ recruiter.email }}</p>
+                      <p class="text-xs text-slate-500">{{ recruiter.role }}</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -219,43 +228,74 @@
     <!-- Bulk Assign Modal -->
     <div
       v-if="showBulkAssignModal"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+      class="fixed inset-0 z-[150] flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-sm transition-all duration-300"
       @click="showBulkAssignModal = false"
     >
-      <div class="mx-4 w-full max-w-md rounded-2xl bg-white p-6 dark:bg-black" @click.stop>
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-          Assigner {{ selectedCandidates.length }} candidat(s)
-        </h3>
-        <div class="space-y-3">
-          <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Sélectionner un recruteur
-          </label>
-          <select
-            v-model="bulkRecruiterId"
-            class="input-field"
+      <div 
+        class="relative w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 animate-in zoom-in-95 duration-200"
+        @click.stop
+      >
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 bg-white px-6 py-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+            Assigner {{ selectedCandidates.length }} candidat(s)
+          </h3>
+          <button
+            type="button"
+            class="rounded-xl p-2 text-slate-400 hover:bg-slate-50 hover:text-slate-600 dark:hover:bg-slate-800 transition-all"
+            @click="showBulkAssignModal = false"
           >
-            <option value="">Choisir un recruteur...</option>
-            <option v-for="recruiter in recruiters" :key="recruiter.id" :value="recruiter.id">
-              {{ recruiter.first_name }} {{ recruiter.last_name }} ({{ assignedCandidates[recruiter.id]?.length || 0 }} candidat(s))
-            </option>
-          </select>
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
-        <div class="mt-6 flex justify-end gap-3">
+
+        <div class="p-6 space-y-4">
+          <div class="space-y-2">
+            <label class="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+              Sélectionner un recruteur
+            </label>
+            <select
+              v-model="bulkRecruiterId"
+              class="input-field w-full py-3"
+            >
+              <option value="">Choisir un recruteur...</option>
+              <option v-for="recruiter in recruiters" :key="recruiter.id" :value="recruiter.id">
+                {{ recruiter.first_name }} {{ recruiter.last_name }} ({{ assignedCandidates[recruiter.id]?.length || 0 }} candidat(s))
+              </option>
+            </select>
+          </div>
+          
+          <div class="rounded-xl bg-blue-50 p-4 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-800/50">
+            <div class="flex gap-3">
+              <svg class="h-5 w-5 text-blue-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
+                Les candidats sélectionnés seront immédiatement assignés au recruteur choisi. Cette action mettra à jour leurs dossiers.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="border-t border-slate-100 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-900 flex flex-col sm:flex-row gap-3">
           <button
             @click="showBulkAssignModal = false"
-            class="btn-secondary"
+            class="btn-secondary w-full sm:flex-1 justify-center py-2.5"
           >
             Annuler
           </button>
           <button
             @click="bulkAssignCandidates"
             :disabled="!bulkRecruiterId || bulkAssigning"
-            class="btn-primary"
+            class="btn-primary w-full sm:flex-1 justify-center py-2.5"
           >
             <svg v-if="bulkAssigning" class="mr-2 inline h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Assigner
+            Confirmer l'assignation
           </button>
         </div>
       </div>
@@ -445,26 +485,31 @@ const clearSelection = () => {
 
 const bulkAssignCandidates = async () => {
   if (!bulkRecruiterId.value || selectedCandidates.value.length === 0) return
+  await bulkAssignToRecruiter(bulkRecruiterId.value)
+}
 
+const assignSelectedToRecruiter = async (recruiterId) => {
+  if (selectedCandidates.value.length === 0) return
+  await bulkAssignToRecruiter(recruiterId)
+}
+
+const bulkAssignToRecruiter = async (recruiterId) => {
   bulkAssigning.value = true
   try {
-    const result = await applicationsStore.bulkAssignRecruiter(selectedCandidates.value, bulkRecruiterId.value)
+    const result = await applicationsStore.bulkAssignRecruiter(selectedCandidates.value, recruiterId)
     
-    // Protection contre result undefined
     if (!result?.success) {
-      toast.error(result?.error || 'Erreur lors de l\'assignation en masse')
+      toast.error(result?.error || 'Erreur lors de l\'assignation')
       return
     }
 
-    toast.success(`${selectedCandidates.value.length} candidat(s) assigné(s) avec succès`)
-    // Réinitialiser la sélection pour faire disparaître le bouton
+    toast.success(`${selectedCandidates.value.length} candidat(s) assigné(s)`)
     selectedCandidates.value = []
     showBulkAssignModal.value = false
     bulkRecruiterId.value = ''
-    // Recharger les données pour une UI réactive
     await loadData()
   } catch (error) {
-    toast.error(error?.message || 'Erreur lors de l\'assignation en masse')
+    toast.error(error?.message || 'Erreur lors de l\'assignation')
   } finally {
     bulkAssigning.value = false
   }
@@ -504,5 +549,21 @@ onMounted(loadData)
 
 .assigned-candidate-card {
   @apply p-2 rounded-md bg-slate-100 border border-slate-200 cursor-move transition-all hover:bg-slate-200 dark:bg-slate-700 dark:border-slate-600 dark:hover:bg-slate-600;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full dark:bg-slate-800;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-300 dark:bg-slate-700;
 }
 </style>

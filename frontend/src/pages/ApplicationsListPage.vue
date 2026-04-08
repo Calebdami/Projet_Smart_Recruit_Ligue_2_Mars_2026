@@ -1,18 +1,21 @@
 <template>
   <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-    <div class="mb-6 flex items-center justify-between">
-      <div class="flex items-center gap-4">
+    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex flex-col gap-4">
         <router-link 
           v-if="filters.job_id && selectedJob" 
           :to="`/jobs/${filters.job_id}`" 
-          class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+          class="group inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm border border-slate-200 transition-all hover:bg-slate-50 hover:text-slate-900 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white w-fit"
         >
-          ← Retour à l'offre
+          <svg class="h-4 w-4 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Retour à l'offre
         </router-link>
         <div>
-          <h1 class="text-2xl font-bold text-slate-900 dark:text-white">Candidatures</h1>
+          <h1 class="text-2xl font-bold text-slate-900 dark:text-white sm:text-3xl">Candidatures</h1>
           <p class="text-sm text-slate-600 dark:text-slate-400" v-if="filters.job_id && selectedJob">
-            Pour {{ selectedJob.title }}
+            Pour <span class="font-semibold">{{ selectedJob.title }}</span>
           </p>
           <p class="text-sm text-slate-600 dark:text-slate-400" v-else>Suivez et gérez toutes les candidatures.</p>
         </div>
@@ -21,7 +24,7 @@
 
     <!-- Filters -->
     <div class="mb-6 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-black">
-      <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <input v-model="filters.search" type="text" placeholder="Candidat, offre..." class="input-field" @input="debouncedSearch">
         <select v-model="filters.status" class="input-field" @change="loadApplications">
           <option value="">Tous les statuts</option>
@@ -43,8 +46,8 @@
       </div>
     </div>
 
-    <!-- Applications Table -->
-    <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-black">
+    <!-- Desktop Table View -->
+    <div class="hidden overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-black md:block">
       <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
         <thead class="bg-slate-50 dark:bg-slate-900">
           <tr>
@@ -57,7 +60,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-          <tr v-for="app in applications" :key="app.id" class="hover:bg-slate-50 dark:hover:bg-slate-900">
+          <tr v-for="app in applications" :key="app.id" class="hover:bg-slate-50 dark:hover:bg-slate-900 transition-colors">
             <td class="px-6 py-4">
               <div class="flex items-center">
                 <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-medium">
@@ -65,22 +68,59 @@
                 </div>
                 <div class="ml-3">
                   <p class="text-sm font-medium text-slate-900 dark:text-white">{{ app.candidate?.first_name }} {{ app.candidate?.last_name }}</p>
-                  <p class="text-sm text-slate-500">{{ app.candidate?.email }}</p>
+                  <p class="text-xs text-slate-500">{{ app.candidate?.email }}</p>
                 </div>
               </div>
             </td>
-            <td class="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">{{ app.job?.title }}</td>
+            <td class="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
+              <p class="truncate max-w-[200px]" :title="app.job?.title">{{ app.job?.title }}</p>
+            </td>
             <td class="px-6 py-4">
               <span :class="getStatusClass(app.status)">{{ getStatusLabel(app.status) }}</span>
             </td>
             <td class="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">{{ app.recruiter?.first_name || '-' }}</td>
             <td class="px-6 py-4 text-sm text-slate-500">{{ formatDate(app.created_at) }}</td>
             <td class="px-6 py-4 text-right">
-              <router-link :to="`/applications/${app.id}`" class="text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400">Voir →</router-link>
+              <router-link :to="`/applications/${app.id}`" class="text-sm font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400">Voir →</router-link>
             </td>
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- Mobile Card View -->
+    <div class="grid grid-cols-1 gap-4 md:hidden">
+      <div v-for="app in applications" :key="app.id" class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-black">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex items-center">
+            <div class="h-10 w-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold">
+              {{ app.candidate?.first_name?.[0] }}{{ app.candidate?.last_name?.[0] }}
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-bold text-slate-900 dark:text-white">{{ app.candidate?.first_name }} {{ app.candidate?.last_name }}</p>
+              <p class="text-xs text-slate-500 truncate max-w-[150px]">{{ app.candidate?.email }}</p>
+            </div>
+          </div>
+          <span :class="getStatusClass(app.status)">{{ getStatusLabel(app.status) }}</span>
+        </div>
+        <div class="space-y-2 mb-4">
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-500">Offre :</span>
+            <span class="font-medium text-slate-900 dark:text-white truncate max-w-[200px]">{{ app.job?.title }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-500">Recruteur :</span>
+            <span class="text-slate-700 dark:text-slate-300">{{ app.recruiter?.first_name || '-' }}</span>
+          </div>
+          <div class="flex justify-between text-sm">
+            <span class="text-slate-500">Date :</span>
+            <span class="text-slate-500">{{ formatDate(app.created_at) }}</span>
+          </div>
+        </div>
+        <router-link :to="`/applications/${app.id}`" class="btn-primary w-full justify-center text-sm">
+          Gérer la candidature
+        </router-link>
+      </div>
     </div>
 
     <div v-if="loading" class="mt-8 text-center">

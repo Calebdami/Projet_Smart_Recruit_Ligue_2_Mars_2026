@@ -1,59 +1,61 @@
 <template>
-  <div class="card-elevated p-6">
-    <h2 class="mb-6 text-lg font-semibold text-slate-900 dark:text-white">Parcours de la candidature</h2>
+  <div class="card-elevated p-5 sm:p-6 overflow-hidden">
+    <h2 class="mb-8 text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+      <span class="h-5 w-1.5 rounded-full bg-brand-500 shadow-[0_0_8px_rgba(var(--color-brand-500),0.5)]"></span>
+      Parcours de la candidature
+    </h2>
     
     <!-- Pipeline Steps -->
-    <div class="flex items-center justify-between">
-      <div 
-        v-for="(step, index) in steps" 
-        :key="step.value"
-        class="flex flex-col items-center flex-1"
-      >
-        <!-- Step Circle -->
-        <button
-          @click="$emit('update-status', step.value)"
-          :class="[
-            'h-10 w-10 rounded-full font-semibold text-sm transition-all',
-            currentStatus === step.value 
-              ? 'bg-brand-500 text-white ring-4 ring-brand-200 dark:ring-brand-900 scale-110' 
-              : isStepCompleted(index)
-              ? 'bg-emerald-500 text-white hover:scale-105'
-              : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-600'
-          ]"
-          :title="`Marquer comme ${step.label}`"
-        >
-          <span v-if="isStepCompleted(index)">✓</span>
-          <span v-else>{{ index + 1 }}</span>
-        </button>
-        
-        <!-- Step Label -->
-        <p class="mt-2 text-xs font-medium text-slate-700 dark:text-slate-300 text-center">
-          {{ step.label }}
-        </p>
-        
-        <!-- Connector Line -->
+    <div class="relative px-2">
+      <!-- Background Line -->
+      <div class="absolute left-0 top-[18px] sm:top-5 h-0.5 w-full bg-slate-100 dark:bg-slate-800"></div>
+      
+      <div class="flex items-start justify-between">
         <div 
-          v-if="index < steps.length - 1"
-          :class="[
-            'absolute h-1 w-12 mt-[-2.5rem] ml-20 transition-all',
-            isStepCompleted(index) 
-              ? 'bg-emerald-500' 
-              : currentStatusIndex > index
-              ? 'bg-emerald-500'
-              : 'bg-slate-200 dark:bg-slate-700'
-          ]"
-        />
+          v-for="(step, index) in steps" 
+          :key="step.value"
+          class="relative flex flex-col items-center flex-1 z-10"
+        >
+          <!-- Step Circle -->
+          <button
+            @click="$emit('update-status', step.value)"
+            :class="[
+              'h-9 w-9 sm:h-10 sm:w-10 rounded-full font-black text-xs sm:text-sm transition-all flex items-center justify-center shadow-sm',
+              currentStatus === step.value 
+                ? 'bg-brand-500 text-white ring-4 ring-brand-100 dark:ring-brand-900/50 scale-110 z-20 shadow-lg shadow-brand-500/20' 
+                : isStepCompleted(index)
+                ? 'bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-500/10'
+                : 'bg-white text-slate-400 border-2 border-slate-100 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-600 hover:border-brand-200 dark:hover:border-brand-900'
+            ]"
+            :title="`Marquer comme ${step.label}`"
+          >
+            <svg v-if="isStepCompleted(index)" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+            </svg>
+            <span v-else>{{ index + 1 }}</span>
+          </button>
+          
+          <!-- Step Label -->
+          <p 
+            :class="[
+              'mt-3 text-[10px] sm:text-xs font-bold text-center px-1 max-w-[65px] sm:max-w-none leading-tight transition-colors',
+              currentStatus === step.value ? 'text-brand-600 dark:text-brand-400' : 'text-slate-500 dark:text-slate-400'
+            ]"
+          >
+            {{ step.label }}
+          </p>
+        </div>
       </div>
     </div>
 
     <!-- Status Legend -->
-    <div class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
-      <div v-for="status in statuses" :key="status.value" class="flex items-center gap-2 text-xs">
+    <div class="mt-10 pt-6 border-t border-slate-50 dark:border-slate-800/50 flex flex-wrap justify-center gap-x-6 gap-y-3">
+      <div v-for="status in statuses" :key="status.value" class="flex items-center gap-2 group cursor-default">
         <span :class="[
-          'h-2 w-2 rounded-full',
+          'h-2 w-2 rounded-full ring-2 ring-transparent transition-all group-hover:ring-slate-200 dark:group-hover:ring-slate-700',
           getStatusColor(status.value)
         ]" />
-        <span class="text-slate-600 dark:text-slate-400">{{ status.label }}</span>
+        <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider group-hover:text-slate-700 dark:group-hover:text-slate-200 transition-colors">{{ status.label }}</span>
       </div>
     </div>
   </div>

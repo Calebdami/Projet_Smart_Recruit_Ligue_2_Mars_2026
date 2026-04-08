@@ -1,5 +1,5 @@
 <template>
-  <div class="mx-auto max-w-7xl animate-fade-in-up">
+  <div class="animate-fade-in-up">
     <div class="table-shell mb-6">
       <div class="panel-header bg-gradient-to-r from-white to-slate-50/80 dark:from-slate-900 dark:to-slate-900">
         <div class="flex items-start gap-3">
@@ -21,17 +21,19 @@
       </div>
 
       <div class="border-b border-slate-200/80 px-4 py-4 dark:border-slate-700 sm:px-6">
-        <div class="flex flex-wrap gap-3">
-          <input v-model="searchQuery" type="search" placeholder="Rechercher…" class="input-field min-w-[200px] flex-1 !py-2.5">
-          <select v-model="actionFilter" class="input-field max-w-[180px] !py-2.5">
-            <option value="">Toutes les actions</option>
-            <option value="login">Connexion</option>
-            <option value="logout">Déconnexion</option>
-            <option value="create">Création</option>
-            <option value="update">Mise à jour</option>
-            <option value="delete">Suppression</option>
-          </select>
-          <input v-model="dateFilter" type="date" class="input-field max-w-[180px] !py-2.5">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <input v-model="searchQuery" type="search" placeholder="Rechercher…" class="input-field w-full sm:flex-1 !py-2.5">
+          <div class="flex items-center gap-3">
+            <select v-model="actionFilter" class="input-field flex-1 !py-2.5 sm:max-w-[180px]">
+              <option value="">Toutes les actions</option>
+              <option value="login">Connexion</option>
+              <option value="logout">Déconnexion</option>
+              <option value="create">Création</option>
+              <option value="update">Mise à jour</option>
+              <option value="delete">Suppression</option>
+            </select>
+            <input v-model="dateFilter" type="date" class="input-field flex-1 !py-2.5 sm:max-w-[180px]">
+          </div>
         </div>
       </div>
     </div>

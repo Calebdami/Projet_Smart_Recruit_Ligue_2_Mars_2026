@@ -13,7 +13,15 @@
   }
 
   body {
-    @apply transition-colors duration-300;
+    @apply min-h-screen text-slate-900 transition-all duration-500 ease-in-out;
+    @apply dark:bg-black dark:text-slate-100;
+  }
+
+  /* Transition globale pour tous les éléments lors du changement de thème */
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+    transition-duration: 400ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
