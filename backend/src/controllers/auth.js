@@ -215,6 +215,7 @@ class AuthController {
                     ip_address: req.ip,
                     user_agent: req.get('User-Agent'),
                 });
+
             }
             res.json({
                 success: true,

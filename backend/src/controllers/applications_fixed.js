@@ -1,7 +1,7 @@
 import { db } from '../config/database.js';
 import { auditLog } from '../utils/audit.js';
-import { ScoringEngine } from '../utils/scoringEngine.js';
 import { NotificationService } from '../services/notifications.js';
+import { ScoringEngine } from '../utils/scoringEngine.js';
 
 class ApplicationController {
     // Apply for a job (Candidate only)
@@ -33,7 +33,7 @@ class ApplicationController {
             const existingApplication = await db('applications')
                 .where({ candidate_id: candidate.id, job_id })
                 .first();
-
+            
             if (existingApplication) {
                 return res.status(409).json({
                     success: false,
@@ -73,27 +73,20 @@ class ApplicationController {
                 user_agent: req.get('User-Agent'),
             });
 
-            // Notify recruiters/admins that a new application was received
-            const recruiters = await db('users')
-                .whereIn('role', ['recruiter', 'admin'])
-                .where('is_active', true)
-                .select('id');
-
-            for (const recipient of recruiters) {
-                await NotificationService.create({
-                    userId: recipient.id,
-                    type: 'application_received',
-                    title: 'Nouvelle candidature reçue',
-                    message: `${candidate.first_name || 'Un candidat'} a postulé à "${job.title}"`,
-                    data: {
-                        application_id: application.id,
-                        job_id,
-                        candidate_id: candidate.id,
-                    },
-                    priority: 'high',
-                    channel: 'in_app',
-                });
-            }
+            // 8. Send notification to job creator
+            await NotificationService.create({
+                userId: job.created_by,
+                type: 'application_received',
+                title: 'Nouvelle candidature reçue',
+                message: `${candidate.first_name} ${candidate.last_name} a postulé à votre offre "${job.title}"`,
+                data: {
+                    applicationId: application.id,
+                    jobId: job_id,
+                    candidateId: candidate.id,
+                    aiScore,
+                },
+                priority: 'high',
+            });
 
             res.status(201).json({
                 success: true,
@@ -115,7 +108,7 @@ class ApplicationController {
         try {
             const userId = req.user.id;
             const candidate = await db('candidates').where('user_id', userId).first();
-
+            
             if (!candidate) {
                 return res.status(404).json({
                     success: false,
@@ -151,7 +144,6 @@ class ApplicationController {
                 .join('candidates', 'applications.candidate_id', 'candidates.id')
                 .join('users', 'candidates.user_id', 'users.id')
                 .join('jobs', 'applications.job_id', 'jobs.id')
-                .leftJoin('users as recruiter_user', 'applications.recruiter_id', 'recruiter_user.id')
                 .select(
                     'applications.*',
                     'users.first_name',
@@ -159,9 +151,7 @@ class ApplicationController {
                     'users.email',
                     'candidates.headline',
                     'candidates.location',
-                    'jobs.title as job_title',
-                    'recruiter_user.first_name as recruiter_first_name',
-                    'recruiter_user.last_name as recruiter_last_name'
+                    'jobs.title as job_title'
                 );
 
             if (search) {
@@ -368,33 +358,34 @@ class ApplicationController {
                 .update({
                     status,
                     next_step,
-                    recruiter_id: userId,
                     updated_at: db.fn.now(),
                 })
                 .returning('*');
 
-            // Notify candidate about status update
-            const candidateUser = await db('candidates')
+            // Get candidate user for notification
+            const candidate = await db('candidates')
                 .join('users', 'candidates.user_id', 'users.id')
-                .select('users.id as user_id')
-                .where('candidates.id', application.candidate_id)
+                .where('candidates.id', updatedApplication.candidate_id)
+                .select('users.id as user_id', 'users.first_name', 'users.last_name')
                 .first();
 
-            if (candidateUser) {
-                const jobInfo = await db('jobs').where('id', application.job_id).select('title').first();
+            // Get job details
+            const job = await db('jobs').where('id', updatedApplication.job_id).first();
+
+            // Send notification to candidate
+            if (candidate && job) {
                 await NotificationService.create({
-                    userId: candidateUser.user_id,
+                    userId: candidate.user_id,
                     type: 'application_status',
-                    title: 'Mise à jour de votre candidature',
-                    message: `Votre candidature pour "${jobInfo?.title || 'ce poste'}" est maintenant "${status}"`,
+                    title: 'Statut de votre candidature mis à jour',
+                    message: `Votre candidature pour "${job.title}" est maintenant "${status}"`,
                     data: {
-                        application_id: id,
-                        old_status: application.status,
-                        new_status: status,
-                        notes,
+                        applicationId: updatedApplication.id,
+                        jobId: job.id,
+                        oldStatus: application.status,
+                        newStatus: status,
                     },
-                    priority: status === 'interview' || status === 'offer' || status === 'hired' ? 'high' : 'medium',
-                    channel: 'in_app',
+                    priority: 'medium',
                 });
             }
 
@@ -402,16 +393,18 @@ class ApplicationController {
             await auditLog({
                 action: 'update_status',
                 entity_type: 'application',
-                entity_id: id,
+                entity_id: application.id,
                 user_id: userId,
                 ip_address: req.ip,
                 user_agent: req.get('User-Agent'),
+                old_values: { status: application.status },
+                new_values: { status },
             });
 
             res.json({
                 success: true,
-                data: updatedApplication,
-                message: `Application status updated to ${status}`,
+                data: { application: updatedApplication },
+                message: 'Application status updated successfully',
             });
         } catch (error) {
             console.error('Update application status error:', error);
@@ -429,11 +422,8 @@ class ApplicationController {
             const { recruiter_id } = req.body;
             const userId = req.user.id;
 
-            console.log('Assign recruiter request:', { id, recruiter_id, userId });
-
             const application = await db('applications').where('id', id).first();
-            console.log('Application found:', application);
-
+            
             if (!application) {
                 return res.status(404).json({
                     success: false,
@@ -543,183 +533,6 @@ class ApplicationController {
             });
         } catch (error) {
             console.error('Bulk assign recruiter error:', error);
-            res.status(500).json({
-                success: false,
-                error: 'Internal server error',
-            });
-        }
-    }
-
-    // Drag & Drop status update (Recruiter/Admin only)
-    static async dragDropStatus(req, res) {
-        try {
-            const { id } = req.params;
-            const { status, notes } = req.body;
-            const userId = req.user.id;
-
-            const application = await db('applications').where('id', id).first();
-            if (!application) {
-                return res.status(404).json({
-                    success: false,
-                    error: 'Application not found',
-                });
-            }
-
-            const oldStatus = application.status;
-
-            const [updatedApplication] = await db('applications')
-                .where('id', id)
-                .update({
-                    status,
-                    recruiter_id: userId,
-                    updated_at: db.fn.now(),
-                })
-                .returning('*');
-
-            // Log activity
-            await auditLog({
-                action: 'drag_drop_status',
-                entity_type: 'application',
-                entity_id: id,
-                user_id: userId,
-                ip_address: req.ip,
-                user_agent: req.get('User-Agent'),
-                details: { old_status: oldStatus, new_status: status }
-            });
-
-            // Send notification to candidate
-            const candidate = await db('candidates')
-                .join('users', 'candidates.user_id', 'users.id')
-                .select('users.id as user_id', 'users.first_name', 'users.last_name')
-                .where('candidates.id', application.candidate_id)
-                .first();
-
-            if (candidate) {
-                const statusMessages = {
-                    'reviewing': `Votre candidature passe en évaluation`,
-                    'interview': `Vous êtes sélectionné pour un entretien !`,
-                    'offer': `Une offre vous a été proposée !`,
-                    'hired': `Félicitations ! Vous êtes embauché.`,
-                    'rejected': `Votre candidature n'a pas été retenue.`
-                };
-
-                const message = statusMessages[status] || `Le statut de votre candidature a changé : ${status}`;
-
-                await NotificationService.create({
-                    userId: candidate.user_id,
-                    type: 'application_status',
-                    title: 'Mise à jour de votre candidature',
-                    message: message,
-                    data: {
-                        application_id: id,
-                        old_status: oldStatus,
-                        new_status: status,
-                        job_title: (await db('jobs').where('id', application.job_id).select('title').first())?.title
-                    },
-                    priority: status === 'interview' || status === 'offer' || status === 'hired' ? 'high' : 'medium',
-                    channel: 'in_app'
-                });
-            }
-
-            res.json({
-                success: true,
-                data: updatedApplication,
-                message: `Application moved to ${status}`,
-            });
-        } catch (error) {
-            console.error('Drag drop status error:', error);
-            res.status(500).json({
-                success: false,
-                error: 'Internal server error',
-            });
-        }
-    }
-
-    // Bulk Drag & Drop status update (Recruiter/Admin only)
-    static async bulkDragDropStatus(req, res) {
-        try {
-            const { application_ids, status, notes } = req.body;
-            const userId = req.user.id;
-
-            if (!Array.isArray(application_ids) || application_ids.length === 0) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Application IDs array is required',
-                });
-            }
-
-            // Get applications before update for notifications
-            const applications = await db('applications')
-                .whereIn('id', application_ids)
-                .select('id', 'candidate_id', 'job_id', 'status');
-
-            // Update applications in bulk
-            const updatedApplications = await db('applications')
-                .whereIn('id', application_ids)
-                .update({
-                    status,
-                    recruiter_id: userId,
-                    updated_at: db.fn.now(),
-                })
-                .returning('*');
-
-            // Log activity for each update
-            for (const appId of application_ids) {
-                const oldApp = applications.find(a => a.id === appId);
-                await auditLog({
-                    action: 'bulk_drag_drop_status',
-                    entity_type: 'application',
-                    entity_id: appId,
-                    user_id: userId,
-                    ip_address: req.ip,
-                    user_agent: req.get('User-Agent'),
-                    details: { old_status: oldApp?.status, new_status: status }
-                });
-            }
-
-            // Send notifications to candidates
-            for (const app of applications) {
-                const candidate = await db('candidates')
-                    .join('users', 'candidates.user_id', 'users.id')
-                    .select('users.id as user_id', 'users.first_name', 'users.last_name')
-                    .where('candidates.id', app.candidate_id)
-                    .first();
-
-                if (candidate) {
-                    const statusMessages = {
-                        'reviewing': `Votre candidature passe en évaluation`,
-                        'interview': `Vous êtes sélectionné pour un entretien !`,
-                        'offer': `Une offre vous a été proposée !`,
-                        'hired': `Félicitations ! Vous êtes embauché.`,
-                        'rejected': `Votre candidature n'a pas été retenue.`
-                    };
-
-                    const message = statusMessages[status] || `Le statut de votre candidature a changé : ${status}`;
-
-                    await NotificationService.create({
-                        userId: candidate.user_id,
-                        type: 'application_status',
-                        title: 'Mise à jour de votre candidature',
-                        message: message,
-                        data: {
-                            application_id: app.id,
-                            old_status: app.status,
-                            new_status: status,
-                            job_title: (await db('jobs').where('id', app.job_id).select('title').first())?.title
-                        },
-                        priority: status === 'interview' || status === 'offer' || status === 'hired' ? 'high' : 'medium',
-                        channel: 'in_app'
-                    });
-                }
-            }
-
-            res.json({
-                success: true,
-                data: { applications: updatedApplications },
-                message: `${application_ids.length} applications moved to ${status}`,
-            });
-        } catch (error) {
-            console.error('Bulk drag drop status error:', error);
             res.status(500).json({
                 success: false,
                 error: 'Internal server error',

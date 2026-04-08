@@ -11,7 +11,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
   // Getters
   const allNotifications = computed(() => notifications.value)
-  const unreadNotifications = computed(() => notifications.value.filter(n => !n.read))
+  const unreadNotifications = computed(() => notifications.value.filter(n => !n.is_read))
   const isLoading = computed(() => loading.value)
 
   // Actions
@@ -47,7 +47,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
       await notificationsService.markAsRead(id)
       const notif = notifications.value.find(n => n.id === id)
       if (notif) {
-        notif.read = true
+        notif.is_read = true
         unreadCount.value = Math.max(0, unreadCount.value - 1)
       }
       return { success: true }
@@ -64,7 +64,9 @@ export const useNotificationsStore = defineStore('notifications', () => {
     error.value = null
     try {
       await notificationsService.markAllAsRead()
-      notifications.value.forEach(n => n.read = true)
+      notifications.value.forEach(n => {
+        n.is_read = true
+      })
       unreadCount.value = 0
       return { success: true }
     } catch (err) {
@@ -81,7 +83,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
     try {
       await notificationsService.deleteNotification(id)
       const notif = notifications.value.find(n => n.id === id)
-      if (notif && !notif.read) {
+      if (notif && !notif.is_read) {
         unreadCount.value = Math.max(0, unreadCount.value - 1)
       }
       notifications.value = notifications.value.filter(n => n.id !== id)
@@ -95,8 +97,12 @@ export const useNotificationsStore = defineStore('notifications', () => {
   }
 
   const addNotification = (notification) => {
-    notifications.value.unshift(notification)
-    if (!notification.read) {
+    const normalizedNotification = {
+      ...notification,
+      is_read: notification.is_read ?? notification.read ?? false
+    }
+    notifications.value.unshift(normalizedNotification)
+    if (!normalizedNotification.is_read) {
       unreadCount.value++
     }
   }

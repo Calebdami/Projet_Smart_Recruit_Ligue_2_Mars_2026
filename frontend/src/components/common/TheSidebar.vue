@@ -227,8 +227,6 @@ const handleLogout = async () => {
     if (confirmed) {
       ui.setConfirmLoading(true)
       await logout()
-      ui.showSuccess('Déconnexion', 'À bientôt.')
-      router.push('/login')
     }
   } catch (e) {
     console.error(e)

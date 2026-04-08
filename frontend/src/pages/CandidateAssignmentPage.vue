@@ -268,10 +268,10 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useApplicationsStore } from '@/stores/applications'
 import { useUserStore } from '@/stores/user'
 import { useJobsStore } from '@/stores/jobs'
-import { useUI } from '@/composables/useUI'
+import { useToast } from '@/composables/useToast'
 import { useDebounce } from '@/composables/useDebounce'
 
-const { toast } = useUI()
+const toast = useToast()
 
 // Stores
 const applicationsStore = useApplicationsStore()

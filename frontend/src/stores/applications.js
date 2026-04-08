@@ -144,6 +144,53 @@ export const useApplicationsStore = defineStore('applications', () => {
     error.value = null
   }
 
+  const dragDropStatus = async (id, status, notes = '') => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.dragDropStatus(id, status, notes)
+      const updated = response.data
+      // Update local application
+      const index = applications.value.findIndex(a => a.id === id)
+      if (index !== -1) {
+        applications.value[index] = { ...applications.value[index], ...updated, status }
+      }
+      if (currentApplication.value?.id === id) {
+        currentApplication.value = { ...currentApplication.value, ...updated, status }
+      }
+      return { success: true, application: updated }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to update status'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const bulkDragDropStatus = async (applicationIds, status, notes = '') => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.bulkDragDropStatus(applicationIds, status, notes)
+      const updatedApplications = response.data?.applications || []
+
+      // Update local applications
+      updatedApplications.forEach(updated => {
+        const index = applications.value.findIndex(a => a.id === updated.id)
+        if (index !== -1) {
+          applications.value[index] = { ...applications.value[index], ...updated, status }
+        }
+      })
+
+      return { success: true, applications: updatedApplications }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to bulk update status'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
   return {
     // State
     applications,
@@ -165,6 +212,8 @@ export const useApplicationsStore = defineStore('applications', () => {
     assignRecruiter,
     bulkAssignRecruiter,
     addNote,
+    dragDropStatus,
+    bulkDragDropStatus,
     setFilters,
     clearError
   }

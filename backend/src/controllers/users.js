@@ -1,7 +1,117 @@
 import { db } from '../config/database.js';
 import { auditLog } from '../utils/audit.js';
+import { NotificationService } from '../services/notifications.js';
+import { hashPassword, validateCreateUserData } from '../utils/auth.js';
 
 class UsersController {
+    // Create user (admin only)
+    static async createUser(req, res) {
+        try {
+            const userData = req.body;
+            const actorUserId = req.user?.sub || req.user?.id;
+
+            // Restrict admin-created accounts to admin/recruiter
+            if (!['admin', 'recruiter'].includes(userData.role)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Invalid role',
+                    message: 'Admin can only create admin or recruiter accounts',
+                });
+            }
+
+            // Validate payload
+            const validation = validateCreateUserData(userData);
+            if (!validation.isValid) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Validation failed',
+                    errors: validation.errors,
+                });
+            }
+
+            const existingUser = await db('users').where('email', userData.email).first();
+            if (existingUser) {
+                return res.status(409).json({
+                    success: false,
+                    error: 'User already exists',
+                    message: 'An account with this email already exists',
+                });
+            }
+
+            const passwordHash = await hashPassword(userData.password);
+
+            const [createdUser] = await db('users')
+                .insert({
+                    email: userData.email,
+                    password_hash: passwordHash,
+                    role: userData.role,
+                    first_name: userData.first_name,
+                    last_name: userData.last_name,
+                    phone: userData.phone || null,
+                    is_active: true,
+                    email_verified: true,
+                    created_at: db.fn.now(),
+                    updated_at: db.fn.now(),
+                })
+                .returning([
+                    'id',
+                    'email',
+                    'role',
+                    'first_name',
+                    'last_name',
+                    'phone',
+                    'is_active',
+                    'email_verified',
+                    'created_at',
+                    'updated_at'
+                ]);
+
+            await auditLog({
+                action: 'create',
+                entity_type: 'user',
+                entity_id: createdUser.id,
+                user_id: actorUserId,
+                ip_address: req.ip,
+                user_agent: req.get('User-Agent'),
+                new_values: {
+                    role: createdUser.role,
+                    email: createdUser.email,
+                    created_by_admin: true,
+                },
+            });
+
+            // Notify admin who performed the action
+            if (actorUserId) {
+                await NotificationService.create({
+                    userId: actorUserId,
+                    type: 'system_update',
+                    title: 'Compte créé',
+                    message: `${createdUser.first_name} ${createdUser.last_name} (${createdUser.role}) a été créé avec succès.`,
+                    data: {
+                        action: 'create_user',
+                        target_user_id: createdUser.id,
+                        target_email: createdUser.email,
+                    },
+                    priority: 'medium',
+                    channel: 'in_app',
+                });
+            }
+
+            return res.status(201).json({
+                success: true,
+                data: { user: createdUser },
+                message: 'User created successfully',
+            });
+        } catch (error) {
+            console.error('Create user error:', error);
+            return res.status(500).json({
+                success: false,
+                error: 'User creation failed',
+                message: 'An error occurred while creating the user',
+            });
+        }
+    }
+
     // Get user profile
     static async getProfile(req, res) {
         try {
@@ -316,6 +426,7 @@ class UsersController {
     static async deactivateUser(req, res) {
         try {
             const { id } = req.params;
+            const actorUserId = req.user?.sub || req.user?.id;
 
             // Get current user data for audit
             const user = await db('users')
@@ -353,12 +464,29 @@ class UsersController {
                 action: 'deactivate',
                 entity_type: 'user',
                 entity_id: id,
-                user_id: req.user.sub,
+                user_id: actorUserId,
                 old_values: { is_active: true },
                 new_values: { is_active: false },
                 ip_address: req.ip,
                 user_agent: req.get('User-Agent'),
             });
+
+            // Notify acting admin/recruiter about deactivation
+            if (actorUserId) {
+                await NotificationService.create({
+                    userId: actorUserId,
+                    type: 'system_update',
+                    title: 'Utilisateur désactivé',
+                    message: `${user.first_name} ${user.last_name} a été désactivé avec succès.`,
+                    data: {
+                        action: 'deactivate_user',
+                        target_user_id: id,
+                        target_email: user.email,
+                    },
+                    priority: 'medium',
+                    channel: 'in_app',
+                });
+            }
 
             res.json({
                 success: true,
@@ -378,6 +506,7 @@ class UsersController {
     static async reactivateUser(req, res) {
         try {
             const { id } = req.params;
+            const actorUserId = req.user?.sub || req.user?.id;
 
             // Get current user data for audit
             const user = await db('users')
@@ -415,12 +544,29 @@ class UsersController {
                 action: 'reactivate',
                 entity_type: 'user',
                 entity_id: id,
-                user_id: req.user.sub,
+                user_id: actorUserId,
                 old_values: { is_active: false },
                 new_values: { is_active: true },
                 ip_address: req.ip,
                 user_agent: req.get('User-Agent'),
             });
+
+            // Notify acting admin/recruiter about reactivation
+            if (actorUserId) {
+                await NotificationService.create({
+                    userId: actorUserId,
+                    type: 'system_update',
+                    title: 'Utilisateur restauré',
+                    message: `${user.first_name} ${user.last_name} a été restauré avec succès.`,
+                    data: {
+                        action: 'reactivate_user',
+                        target_user_id: id,
+                        target_email: user.email,
+                    },
+                    priority: 'medium',
+                    channel: 'in_app',
+                });
+            }
 
             res.json({
                 success: true,

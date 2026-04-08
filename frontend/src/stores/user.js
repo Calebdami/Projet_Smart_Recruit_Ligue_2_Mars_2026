@@ -154,6 +154,24 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const createUser = async (payload) => {
+    loading.value = true
+    error.value = null
+
+    try {
+      const response = await api.post('/users', payload)
+      if (response.data.success) {
+        return { success: true, user: response.data.data?.user, message: response.data.message }
+      }
+      throw new Error(response.data.message || 'Failed to create user')
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to create user'
+      return { success: false, error: error.value, details: err.response?.data?.errors }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const deactivateUser = async (id) => {
     loading.value = true
     error.value = null
@@ -222,6 +240,7 @@ export const useUserStore = defineStore('user', () => {
     fetchUsers,
     fetchUserById,
     updateUser,
+    createUser,
     deactivateUser,
     reactivateUser,
     clearError,

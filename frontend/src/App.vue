@@ -33,9 +33,10 @@
 </template>
 
 <script setup>
-import { computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useUI } from '@/composables/useUI'
+import { useWebSocket } from '@/composables/useWebSocket'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
@@ -44,6 +45,11 @@ import NotificationToast from '@/components/common/NotificationToast.vue'
 
 const route = useRoute()
 const ui = useUI()
+const { connect } = useWebSocket()
+
+onMounted(() => {
+  connect()
+})
 
 const layouts = {
   default: DefaultLayout,

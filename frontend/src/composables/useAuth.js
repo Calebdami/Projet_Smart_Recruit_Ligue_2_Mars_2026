@@ -2,10 +2,12 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
 
 export function useAuth() {
   const router = useRouter()
   const authStore = useAuthStore()
+  const toast = useToast()
 
   const isLoading = ref(false)
   const error = ref(null)
@@ -33,6 +35,8 @@ export function useAuth() {
         // Set axios default header
         axios.defaults.headers.common['Authorization'] = `Bearer ${tokens.access_token}`
 
+        toast.connection('Connexion réussie', 'Bienvenue sur SmartRecruit')
+
         return { success: true, user, tokens }
       } else if (response.data.requires_2fa) {
         // Handle 2FA required case
@@ -42,6 +46,7 @@ export function useAuth() {
       }
     } catch (err) {
       error.value = err.response?.data?.message || err.message || 'Login failed'
+      toast.error('Échec de connexion', error.value)
       return { success: false, error: error.value }
     } finally {
       isLoading.value = false
@@ -79,6 +84,7 @@ export function useAuth() {
       // Clear auth state regardless of API response
       authStore.clearAuth()
       delete axios.defaults.headers.common['Authorization']
+      toast.connection('Déconnexion', 'Vous avez été déconnecté')
       router.push('/login')
     }
   }

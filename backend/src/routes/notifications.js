@@ -18,6 +18,8 @@ router.patch('/:id/read', NotificationController.markAsRead);
 
 // Mark all as read
 router.post('/mark-all-read', NotificationController.markAllAsRead);
+// Backward-compatible alias
+router.patch('/read-all', NotificationController.markAllAsRead);
 
 // Delete notification
 router.delete('/:id', NotificationController.deleteNotification);

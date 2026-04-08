@@ -105,7 +105,7 @@ const progressPercent = (notification) => {
 }
 
 const removeNotification = (id) => {
-  toastStore.removeNotification(id)
+  toastStore.removeToast(id)
 }
 
 const handleAction = (notification) => {

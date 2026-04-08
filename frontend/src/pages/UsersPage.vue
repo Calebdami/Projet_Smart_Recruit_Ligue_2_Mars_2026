@@ -6,12 +6,12 @@
           <h1 class="text-xl font-bold text-slate-900 dark:text-white sm:text-2xl">Utilisateurs</h1>
           <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Gestion des comptes et des rôles</p>
         </div>
-        <!-- <button type="button" class="btn-primary shrink-0">
+        <button type="button" class="btn-primary shrink-0" @click="openCreateUserModal">
           <svg class="svg-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          Ajouter
-        </button> -->
+          Créer un compte
+        </button>
       </div>
 
       <div class="border-b border-slate-200/80 px-4 py-4 dark:border-slate-700 sm:px-6">
@@ -139,12 +139,30 @@
                   </button>
                   <button
                     type="button"
-                    class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-rose-600 transition-colors hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 dark:border-slate-700 dark:bg-slate-900 dark:text-rose-400 dark:hover:bg-rose-950/50 dark:hover:text-rose-300"
-                    @click="handleDeleteUser(user)"
-                    aria-label="Supprimer utilisateur"
+                    :class="[
+                      'inline-flex h-9 w-9 items-center justify-center rounded-full border transition-colors',
+                      user.is_active
+                        ? 'border-slate-200 bg-white text-rose-600 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-800 dark:border-slate-700 dark:bg-slate-900 dark:text-rose-400 dark:hover:bg-rose-950/50 dark:hover:text-rose-300'
+                        : 'border-slate-200 bg-white text-emerald-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 dark:border-slate-700 dark:bg-slate-900 dark:text-emerald-400 dark:hover:bg-emerald-950/50 dark:hover:text-emerald-300'
+                    ]"
+                    @click="handleToggleUserStatus(user)"
+                    :aria-label="user.is_active ? 'Désactiver utilisateur' : 'Restaurer utilisateur'"
                   >
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        v-if="user.is_active"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                      <path
+                        v-else
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9M4.582 9H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -304,6 +322,75 @@
         </div>
       </div>
     </div>
+
+    <!-- Create User Modal -->
+    <div
+      v-if="showCreateUserModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      @click.self="closeCreateUserModal"
+    >
+      <div class="mx-4 w-full max-w-xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+        <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white">Créer un compte</h2>
+          <button type="button" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" @click="closeCreateUserModal">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <form class="space-y-4 p-6" @submit.prevent="submitCreateUser">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Prénom</label>
+              <input v-model="createUserForm.first_name" type="text" class="input-field" required minlength="2">
+            </div>
+            <div>
+              <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Nom</label>
+              <input v-model="createUserForm.last_name" type="text" class="input-field" required minlength="2">
+            </div>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
+            <input v-model="createUserForm.email" type="email" class="input-field" required>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Téléphone</label>
+            <input v-model="createUserForm.phone" type="text" class="input-field" placeholder="+229 00 00 00 00">
+          </div>
+
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Rôle</label>
+            <select v-model="createUserForm.role" class="input-field" required>
+              <option value="recruiter">Recruteur</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Mot de passe</label>
+            <input v-model="createUserForm.password" type="password" class="input-field" required minlength="8">
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              8+ caractères, majuscule, minuscule, chiffre et caractère spécial.
+            </p>
+          </div>
+
+          <p v-if="createUserError" class="text-sm text-rose-600 dark:text-rose-400">{{ createUserError }}</p>
+
+          <div class="flex justify-end gap-3 pt-2">
+            <button type="button" class="btn-secondary" @click="closeCreateUserModal" :disabled="creatingUser">
+              Annuler
+            </button>
+            <button type="submit" class="btn-primary" :disabled="creatingUser">
+              <span v-if="creatingUser">Création...</span>
+              <span v-else>Créer le compte</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -328,6 +415,17 @@ const selectedUser = ref(null)
 const showDetailsModal = ref(false)
 const userDetailsLoading = ref(false)
 const updatingUser = ref(null)
+const showCreateUserModal = ref(false)
+const creatingUser = ref(false)
+const createUserError = ref('')
+const createUserForm = ref({
+  first_name: '',
+  last_name: '',
+  email: '',
+  phone: '',
+  role: 'recruiter',
+  password: ''
+})
 
 const getRoleClass = (role) => {
   const classes = {
@@ -363,6 +461,56 @@ const closeDetailsModal = () => {
   selectedUser.value = null
 }
 
+const resetCreateUserForm = () => {
+  createUserForm.value = {
+    first_name: '',
+    last_name: '',
+    email: '',
+    phone: '',
+    role: 'recruiter',
+    password: ''
+  }
+  createUserError.value = ''
+}
+
+const openCreateUserModal = () => {
+  resetCreateUserForm()
+  showCreateUserModal.value = true
+}
+
+const closeCreateUserModal = () => {
+  showCreateUserModal.value = false
+}
+
+const submitCreateUser = async () => {
+  creatingUser.value = true
+  createUserError.value = ''
+  try {
+    const payload = {
+      ...createUserForm.value,
+      email: createUserForm.value.email.trim().toLowerCase(),
+      first_name: createUserForm.value.first_name.trim(),
+      last_name: createUserForm.value.last_name.trim(),
+      phone: createUserForm.value.phone?.trim() || null
+    }
+
+    const result = await userStore.createUser(payload)
+    if (!result.success) {
+      createUserError.value = result.error || 'Création impossible'
+      return
+    }
+
+    ui.showSuccess('Compte créé', 'Le nouvel utilisateur a été ajouté avec succès.')
+    closeCreateUserModal()
+    await loadUsers()
+  } catch (error) {
+    console.error('Create user error:', error)
+    createUserError.value = 'Une erreur est survenue lors de la création du compte.'
+  } finally {
+    creatingUser.value = false
+  }
+}
+
 const updateUserRole = async (user, newRole) => {
   if (user.role === newRole) return
 
@@ -387,22 +535,35 @@ const updateUserRole = async (user, newRole) => {
   }
 }
 
-const handleDeleteUser = async (user) => {
+const handleToggleUserStatus = async (user) => {
   try {
-    const confirmed = await ui.confirmDelete(`user ${user.first_name} ${user.last_name}`)
+    const isActive = !!user.is_active
+    const fullName = `${user.first_name} ${user.last_name}`
+    const confirmed = isActive
+      ? await ui.confirmDelete(`user ${fullName}`)
+      : await ui.confirmAction(
+          'Restaurer utilisateur',
+          `Voulez-vous restaurer ${fullName} ?`,
+          { confirmText: 'Restaurer', cancelText: 'Annuler' }
+        )
+
     if (confirmed) {
       ui.setConfirmLoading(true)
-      const result = await userStore.deactivateUser(user.id)
+      const result = isActive
+        ? await userStore.deactivateUser(user.id)
+        : await userStore.reactivateUser(user.id)
+
       if (result.success) {
-        ui.showSuccess('User Deleted', `${user.first_name} ${user.last_name} has been successfully deleted.`)
         await loadUsers()
       } else {
-        ui.showError('Delete Failed', result.error)
+        ui.showError('Action échouée', result.error)
       }
     }
   } catch (error) {
-    console.error('Delete user error:', error)
-    ui.showError('Delete Failed', 'An error occurred while deleting the user.')
+    // confirm modal rejects with `false` on cancel; this is not an error
+    if (error === false) return
+    console.error('Toggle user status error:', error)
+    ui.showError('Action échouée', 'Une erreur est survenue.')
   } finally {
     ui.setConfirmLoading(false)
   }

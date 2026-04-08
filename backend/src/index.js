@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import http from 'http';
 
 dotenv.config();
 
@@ -11,6 +12,7 @@ import { db, checkDatabaseHealth } from './config/database.js';
 import { redisClient, checkRedisHealth, closeRedisConnection } from './config/redis.js';
 import { rateLimitMiddleware } from './middleware/auth.js';
 import { initCronJobs } from './utils/cron.js';
+import { WebSocketMiddleware } from './middleware/websocket.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -33,6 +35,7 @@ try {
 }
 
 const app = express();
+const server = http.createServer(app);
 
 // Security middleware
 if (config.security.helmetEnabled) {
@@ -207,10 +210,14 @@ const startServer = async () => {
     await db.raw('SELECT 1');
     console.log('Bingo !! Connection à la bade de donnée réussie !');
     
+    // Initialize WebSocket server on same HTTP server
+    new WebSocketMiddleware(server);
+
     // Start HTTP server
-    app.listen(config.port, () => {
+    server.listen(config.port, () => {
       console.log(`\nSmartRecruit`);
       console.log(`Notre Serveur tourne sur : http://localhost:${config.port}`);
+      console.log(`WebSocket endpoint: ws://localhost:${config.port}/ws`);
     });
   } catch (error) {
     console.error('Failed to start server:', error);

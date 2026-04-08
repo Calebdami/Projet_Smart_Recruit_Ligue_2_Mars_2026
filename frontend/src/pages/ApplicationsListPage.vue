@@ -14,7 +14,7 @@
           <p class="text-sm text-slate-600 dark:text-slate-400" v-if="filters.job_id && selectedJob">
             Pour {{ selectedJob.title }}
           </p>
-          <p class="text-sm text-slate-600 dark:text-slate-400" v-else>Suivez et gérez toutes les candidatures.</p>
+          <p class="text-sm text-slate-600 dark:text-slate-400" v-else>Suivez et gerez toutes les candidatures.</p>
         </div>
       </div>
     </div>
@@ -49,7 +49,6 @@
         <thead class="bg-slate-50 dark:bg-slate-900">
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Candidat</th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Offre</th>
             <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Statut</th>
             <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Recruteur</th>
             <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Date</th>
@@ -61,19 +60,20 @@
             <td class="px-6 py-4">
               <div class="flex items-center">
                 <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-medium">
-                  {{ app.candidate?.first_name?.[0] }}{{ app.candidate?.last_name?.[0] }}
+                  {{ app.first_name?.[0] }}{{ app.last_name?.[0] }}
                 </div>
                 <div class="ml-3">
-                  <p class="text-sm font-medium text-slate-900 dark:text-white">{{ app.candidate?.first_name }} {{ app.candidate?.last_name }}</p>
-                  <p class="text-sm text-slate-500">{{ app.candidate?.email }}</p>
+                  <p class="text-sm font-medium text-slate-900 dark:text-white">{{ app.first_name }} {{ app.last_name }}</p>
+                  <p class="text-sm text-slate-500">{{ app.email }}</p>
                 </div>
               </div>
             </td>
-            <td class="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">{{ app.job?.title }}</td>
             <td class="px-6 py-4">
               <span :class="getStatusClass(app.status)">{{ getStatusLabel(app.status) }}</span>
             </td>
-            <td class="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">{{ app.recruiter?.first_name || '-' }}</td>
+            <td class="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
+              {{ app.recruiter_first_name ? `${app.recruiter_first_name} ${app.recruiter_last_name || ''}`.trim() : '-' }}
+            </td>
             <td class="px-6 py-4 text-sm text-slate-500">{{ formatDate(app.created_at) }}</td>
             <td class="px-6 py-4 text-right">
               <router-link :to="`/applications/${app.id}`" class="text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400">Voir →</router-link>
@@ -130,7 +130,7 @@ onMounted(async () => {
   
   // Load jobs and users for dropdown options
   await jobsStore.fetchJobs()
-  await userStore.fetchUsers()
+  await userStore.fetchUsers({ role: 'recruiter' })
   
   // Load applications with applied filters
   await loadApplications()
@@ -173,9 +173,4 @@ const getStatusLabel = (status) => ({
 
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('fr-FR') : '-'
 
-onMounted(() => {
-  loadApplications()
-  jobsStore.fetchJobs()
-  userStore.fetchUsers()
-})
 </script>

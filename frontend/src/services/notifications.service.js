@@ -17,7 +17,7 @@ class NotificationsService {
   }
 
   async markAllAsRead() {
-    const response = await api.patch('/notifications/read-all')
+    const response = await api.post('/notifications/mark-all-read')
     return response.data
   }
 

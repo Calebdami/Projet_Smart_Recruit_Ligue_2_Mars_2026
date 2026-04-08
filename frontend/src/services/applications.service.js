@@ -45,6 +45,20 @@ class ApplicationsService {
     const response = await api.post(`/applications/${id}/interviews`, data)
     return response.data
   }
+
+  async dragDropStatus(id, status, notes = '') {
+    const response = await api.patch(`/applications/${id}/drag-drop`, { status, notes })
+    return response.data
+  }
+
+  async bulkDragDropStatus(applicationIds, status, notes = '') {
+    const response = await api.patch('/applications/bulk/drag-drop', {
+      application_ids: applicationIds,
+      status,
+      notes
+    })
+    return response.data
+  }
 }
 
 export default new ApplicationsService()

@@ -114,8 +114,6 @@ const handleLogout = async () => {
     if (confirmed) {
       ui.setConfirmLoading(true)
       await logout()
-      ui.showSuccess('Déconnexion', 'Vous êtes déconnecté.')
-      router.push('/login')
     }
   } catch (error) {
     console.error('Logout error:', error)

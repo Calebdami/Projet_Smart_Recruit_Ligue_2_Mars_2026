@@ -18,7 +18,7 @@
     <!-- Notifications List -->
     <div class="space-y-3">
       <div v-for="notification in filteredNotifications" :key="notification.id" 
-           :class="notification.read ? 'bg-white dark:bg-black' : 'bg-brand-50 dark:bg-brand-950/20'"
+           :class="notification.is_read ? 'bg-white dark:bg-black' : 'bg-brand-50 dark:bg-brand-950/20'"
            class="flex items-start gap-4 rounded-2xl border border-slate-200 p-4 dark:border-slate-700">
         <div :class="getIconBg(notification.type)" class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl">
           <svg class="h-5 w-5" :class="getIconColor(notification.type)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -34,7 +34,7 @@
           <p class="mt-1 text-xs text-slate-500">{{ formatTime(notification.created_at) }}</p>
         </div>
         <div class="flex items-center gap-2">
-          <button v-if="!notification.read" class="text-sm text-brand-600 hover:underline dark:text-brand-400" @click="markAsRead(notification.id)">
+          <button v-if="!notification.is_read" class="text-sm text-brand-600 hover:underline dark:text-brand-400" @click="markAsRead(notification.id)">
             Marquer lu
           </button>
           <button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300" @click="deleteNotification(notification.id)">
@@ -61,7 +61,7 @@ const { notifications, unreadCount } = storeToRefs(notificationsStore)
 const filter = ref('all')
 
 const filteredNotifications = computed(() => {
-  if (filter.value === 'unread') return notifications.value.filter(n => !n.read)
+  if (filter.value === 'unread') return notifications.value.filter(n => !n.is_read)
   return notifications.value
 })
 

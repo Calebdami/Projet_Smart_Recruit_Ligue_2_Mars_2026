@@ -31,6 +31,19 @@ const profileUpdateValidation = [
   body('preferences').optional().isObject().withMessage('Preferences must be an object'),
 ];
 
+const createUserValidation = [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
+  body('password').matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter'),
+  body('password').matches(/[a-z]/).withMessage('Password must contain at least one lowercase letter'),
+  body('password').matches(/\d/).withMessage('Password must contain at least one number'),
+  body('password').matches(/[!@#$%^&*(),.?":{}|<>]/).withMessage('Password must contain at least one special character'),
+  body('role').isIn(['admin', 'recruiter']).withMessage('Role must be admin or recruiter'),
+  body('first_name').isLength({ min: 2 }).trim().withMessage('First name must be at least 2 characters long'),
+  body('last_name').isLength({ min: 2 }).trim().withMessage('Last name must be at least 2 characters long'),
+  body('phone').optional().matches(/^[\d\s-+()]+$/).withMessage('Invalid phone number format'),
+];
+
 const usersListValidation = [
   body('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   body('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
@@ -131,6 +144,15 @@ router.get('/',
   usersListValidation,
   validateRequest,
   UsersController.getUsers
+);
+
+// Create user (admin only)
+router.post('/',
+  authenticate,
+  authorize(['admin']),
+  createUserValidation,
+  validateRequest,
+  UsersController.createUser
 );
 
 // Deactivate user (admin only)

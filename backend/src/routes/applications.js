@@ -78,6 +78,23 @@ router.patch('/:id/assign',
   ApplicationController.assignRecruiter
 );
 
+// Drag & Drop routes
+router.patch('/:id/drag-drop',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  updateStatusValidation,
+  validateRequest,
+  ApplicationController.dragDropStatus
+);
+
+router.patch('/bulk/drag-drop',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  bulkAssignRecruiterValidation,
+  validateRequest,
+  ApplicationController.bulkDragDropStatus
+);
+
 router.patch('/bulk-assign',
   authenticate,
   authorize(['admin']),
