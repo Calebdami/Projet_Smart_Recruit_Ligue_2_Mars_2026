@@ -374,42 +374,60 @@ const onDropToRecruiter = async (event, recruiterId) => {
 
   try {
     const result = await applicationsStore.assignRecruiter(draggedCandidate.value.id, recruiterId)
-    if (!result.success) {
-      throw new Error(result.error || 'Erreur lors de l\'assignation')
+    if (!result || !result.success) {
+      toast.error(result?.error || 'Erreur lors de l\'assignation')
+      return
     }
     toast.success(`Candidat assigné avec succès`)
-    
-    // Recharger les données pour une UI réactive
     await loadData()
   } catch (error) {
-    toast.error(error?.message || 'Erreur lors de l\'assignation')
+    let msg = 'Erreur lors de l\'assignation';
+    if (error && typeof error === 'object') {
+      msg = error.message || msg;
+    }
+    toast.error(msg)
   } finally {
     draggedCandidate.value = null
   }
 }
 
-const onDropToUnassigned = async (event) => {
-  if (!draggedCandidate.value) return;
-  await unassignCandidate(draggedCandidate.value.id);
-  draggedCandidate.value = null;
+const unassignCandidate = async (candidateId) => {
+    try {
+        // On appelle le store et on attend le résultat
+        const result = await applicationsStore.assignRecruiter(candidateId, null);
+
+        // PROTECTION : Si result est undefined (Store buggé), on ne crash pas
+        if (result?.success) {
+            toast.success('Candidat désassigné');
+            
+            // Mise à jour locale immédiate pour éviter l'actualisation page
+            const app = applicationsStore.applications.find(a => a.id === candidateId);
+            if (app) app.recruiter_id = null;
+            
+            organizeAssignedCandidates();
+        } else {
+            // Si le store a renvoyé success: false
+            toast.error(result?.error || 'Échec de la désassignation');
+        }
+    } catch (error) {
+        console.error('Erreur attrapée dans unassignCandidate :', error);
+        
+        // PROTECTION : On récupère le message sans JAMAIS lire une propriété sur undefined
+        const message = error?.response?.data?.error 
+                     || error?.message 
+                     || 'Une erreur inattendue est survenue';
+                     
+        toast.error(message);
+    }
 };
 
-const unassignCandidate = async (candidateId) => {
-  try {
-    const result = await applicationsStore.assignRecruiter(candidateId, null);
-
-    if (result?.success) {
-      toast.success('Candidat désassigné');
-      // Recharger les données pour une UI réactive
-      await loadData();
-    } else {
-      toast.error(result?.error || 'Échec de la désassignation');
-    }
-  } catch (error) {
-    console.error('Erreur attrapée :', error);
-    const msg = error?.response?.data?.error || error?.message || 'Erreur lors de la désassignation';
-    toast.error(msg);
-  }
+const onDropToUnassigned = async (event) => {
+    if (!draggedCandidate.value) return;
+    
+    const idToUnassign = draggedCandidate.value.id;
+    draggedCandidate.value = null; // On nettoie avant l'appel pour l'UI
+    
+    await unassignCandidate(idToUnassign);
 };
 
 const toggleCandidateSelection = (candidateId) => {
