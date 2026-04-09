@@ -73,7 +73,7 @@
 
         <!-- Scores -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div v-if="application?.ai_score" class="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+          <div v-if="application?.ai_score !== null && application?.ai_score !== undefined" class="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
             <h4 class="font-medium text-slate-900 dark:text-white mb-2">Score IA</h4>
             <div class="flex items-center gap-2">
               <div class="text-2xl font-bold text-brand-600">{{ application.ai_score }}%</div>
@@ -81,10 +81,10 @@
             </div>
           </div>
 
-          <div v-if="application?.recruiter_score" class="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
+          <div v-if="application?.recruiter_score !== null && application?.recruiter_score !== undefined" class="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg">
             <h4 class="font-medium text-slate-900 dark:text-white mb-2">Note recruteur</h4>
             <div class="flex items-center gap-2">
-              <div class="text-2xl font-bold text-emerald-600">{{ application.recruiter_score }}/10</div>
+              <div class="text-2xl font-bold text-emerald-600">{{ application.recruiter_score }}/100</div>
               <div class="text-sm text-slate-600 dark:text-slate-400">Évaluation manuelle</div>
             </div>
           </div>

@@ -78,12 +78,13 @@
 
       <!-- Sidebar -->
       <div class="space-y-6">
-        <!-- Assignment -->
         <div class="card-elevated p-4">
           <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Scores</h3>
           <div class="space-y-1 text-sm">
-            <div>Score IA: <span class="font-semibold text-brand-600">{{ application.ai_score ?? '-' }}</span></div>
-            <div>Score recruteur: <span class="font-semibold text-emerald-600">{{ application.recruiter_score ?? '-' }}</span></div>
+            <template v-if="!isCandidate">
+              <div>Score IA: <span class="font-semibold text-brand-600">{{ application.ai_score ?? '-' }}</span></div>
+              <div>Score recruteur: <span class="font-semibold text-emerald-600">{{ application.recruiter_score ?? '-' }}</span></div>
+            </template>
             <div>Score final: <span class="font-semibold text-violet-600">{{ application.final_score ?? computeFinalScore(application.ai_score, application.recruiter_score) ?? '-' }}</span></div>
           </div>
           <div v-if="!isCandidate" class="mt-3 space-y-2">

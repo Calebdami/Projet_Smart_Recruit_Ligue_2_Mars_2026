@@ -59,9 +59,9 @@
               </td>
               <td class="px-6 py-4">
                 <div class="text-xs space-y-1">
-                  <div class="font-medium text-brand-600">IA: {{ app.ai_score ?? '-' }}</div>
-                  <div class="text-emerald-600">Recruteur: {{ app.recruiter_score ?? '-' }}</div>
-                  <div class="text-violet-600 font-semibold">Final: {{ app.final_score ?? computeFinalScore(app.ai_score, app.recruiter_score) ?? '-' }}</div>
+                  <div class="text-violet-600 font-semibold">
+                    Score final: {{ app.final_score ?? computeFinalScore(app.ai_score, app.recruiter_score) ?? '-' }}
+                  </div>
                 </div>
               </td>
               <td class="px-6 py-4">{{ app.documents_count ?? 0 }}</td>

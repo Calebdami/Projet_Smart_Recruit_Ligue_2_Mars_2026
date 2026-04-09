@@ -153,6 +153,43 @@ export const useCandidatesStore = defineStore('candidates', () => {
     }
   }
 
+  const addCandidateNote = async (id, note) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await candidatesService.addNote(id, note)
+      const updated = response.data?.candidate || response.data
+      const index = candidates.value.findIndex(c => c.id === id)
+      if (index !== -1) {
+        candidates.value[index] = { ...candidates.value[index], ...updated }
+      }
+      if (currentCandidate.value?.id === id) {
+        currentCandidate.value = { ...currentCandidate.value, ...updated }
+      }
+      return { success: true, candidate: updated }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to add note'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchCandidateApplications = async (id) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await candidatesService.getCandidateApplications(id)
+      const data = response.data?.applications || response.data?.data?.applications || []
+      return { success: true, applications: data }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to fetch candidate applications'
+      return { success: false, error: error.value, applications: [] }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const setFilters = (newFilters) => {
     filters.value = { ...filters.value, ...newFilters }
   }
@@ -179,10 +216,12 @@ export const useCandidatesStore = defineStore('candidates', () => {
     // Actions
     fetchCandidates,
     fetchCandidate,
+    fetchCandidateApplications,
     fetchCandidateCV,
     uploadCV,
     parseCV,
     updateCandidate,
+    addCandidateNote,
     setFilters,
     clearError
   }

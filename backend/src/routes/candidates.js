@@ -33,6 +33,14 @@ const profileUpdateValidation = [
   body('years_experience').optional().isInt({ min: 0 }),
 ];
 
+const candidateUpdateValidation = [
+  body('recruiter_score').optional().isFloat({ min: 0, max: 100 }).withMessage('Recruiter score must be between 0 and 100'),
+];
+
+const candidateNoteValidation = [
+  body('note').isString().withMessage('Note is required'),
+];
+
 // Routes
 
 // Candidate's own profile
@@ -100,6 +108,22 @@ router.get('/:id/applications',
   authenticate,
   authorize(['recruiter', 'admin']),
   CandidateController.getCandidateApplications
+);
+
+router.put('/:id',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  candidateUpdateValidation,
+  validateRequest,
+  CandidateController.updateCandidateByAdmin
+);
+
+router.post('/:id/notes',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  candidateNoteValidation,
+  validateRequest,
+  CandidateController.addCandidateNote
 );
 
 export default router;

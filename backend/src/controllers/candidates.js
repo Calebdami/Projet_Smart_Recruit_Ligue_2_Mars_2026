@@ -1,6 +1,7 @@
 import { db } from '../config/database.js';
 import { auditLog } from '../utils/audit.js';
 import { ResumeParser } from '../utils/resumeParser.js';
+import { NotificationService } from '../services/notifications.js';
 import path from 'path';
 import fs from 'fs/promises';
 import crypto from 'crypto';
@@ -487,6 +488,199 @@ class CandidateController {
                 success: false,
                 error: 'Internal server error',
                 message: 'Failed to retrieve applications',
+            });
+        }
+    }
+
+    static normalizeScore(value) {
+        const n = Number(value);
+        if (Number.isNaN(n)) return null;
+        return Math.max(0, Math.min(100, Math.round(n * 100) / 100));
+    }
+
+    static computeFinalScore(aiScore, recruiterScore) {
+        const ai = CandidateController.normalizeScore(aiScore);
+        const recruiter = CandidateController.normalizeScore(recruiterScore);
+        if (ai === null && recruiter === null) return null;
+        if (ai === null) return recruiter;
+        if (recruiter === null) return ai;
+        return Math.round(((ai + recruiter) / 2) * 100) / 100;
+    }
+
+    static async updateCandidateByAdmin(req, res) {
+        try {
+            const { id } = req.params;
+            const { recruiter_score } = req.body;
+
+            const candidate = await db('candidates').where('id', id).first();
+            if (!candidate) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Candidate not found',
+                });
+            }
+
+            const normalizedRecruiterScore = CandidateController.normalizeScore(recruiter_score);
+            const rawMetadata = typeof candidate.metadata === 'string'
+                ? (candidate.metadata || '{}')
+                : JSON.stringify(candidate.metadata || {});
+            let metadataObj;
+            try {
+                metadataObj = JSON.parse(rawMetadata || '{}');
+            } catch {
+                metadataObj = {};
+            }
+
+            const finalScore = CandidateController.computeFinalScore(candidate.smart_score, normalizedRecruiterScore);
+
+            const newMetadata = {
+                ...metadataObj,
+                recruiter_score: normalizedRecruiterScore,
+                final_score: finalScore,
+            };
+
+            const [updated] = await db('candidates')
+                .where('id', id)
+                .update({
+                    metadata: JSON.stringify(newMetadata),
+                    updated_at: db.fn.now(),
+                })
+                .returning('*');
+
+            await auditLog({
+                action: 'candidate_recruiter_score_updated',
+                entity_type: 'candidate',
+                entity_id: id,
+                user_id: req.user.id,
+                ip_address: req.ip,
+                user_agent: req.get('User-Agent'),
+                new_values: {
+                    recruiter_score: normalizedRecruiterScore,
+                    final_score: finalScore,
+                },
+            });
+
+            const userId = candidate.user_id;
+            if (userId) {
+                await NotificationService.create({
+                    userId,
+                    type: 'system_update',
+                    title: 'Votre profil a été évalué',
+                    message: `Votre profil candidat a reçu une nouvelle évaluation (score final: ${finalScore ?? '-'})`,
+                    data: {
+                        candidate_id: id,
+                        recruiter_score: normalizedRecruiterScore,
+                        final_score: finalScore,
+                    },
+                    priority: 'medium',
+                    channel: 'in_app',
+                });
+            }
+
+            res.json({
+                success: true,
+                candidate: {
+                    ...updated,
+                    metadata: newMetadata,
+                    final_score: finalScore,
+                },
+                message: 'Candidate score updated successfully',
+            });
+        } catch (error) {
+            console.error('Update candidate by admin error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Internal server error',
+                message: 'Failed to update candidate',
+            });
+        }
+    }
+
+    static async addCandidateNote(req, res) {
+        try {
+            const { id } = req.params;
+            const { note } = req.body;
+
+            const candidate = await db('candidates').where('id', id).first();
+            if (!candidate) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Candidate not found',
+                });
+            }
+
+            const rawMetadata = typeof candidate.metadata === 'string'
+                ? (candidate.metadata || '{}')
+                : JSON.stringify(candidate.metadata || {});
+            let metadataObj;
+            try {
+                metadataObj = JSON.parse(rawMetadata || '{}');
+            } catch {
+                metadataObj = {};
+            }
+
+            const existingNotes = Array.isArray(metadataObj.notes) ? metadataObj.notes : [];
+            const noteEntry = {
+                id: crypto.randomUUID(),
+                note,
+                author_id: req.user.id,
+                created_at: new Date().toISOString(),
+            };
+            const notes = [noteEntry, ...existingNotes];
+
+            const newMetadata = {
+                ...metadataObj,
+                notes,
+            };
+
+            const [updated] = await db('candidates')
+                .where('id', id)
+                .update({
+                    metadata: JSON.stringify(newMetadata),
+                    updated_at: db.fn.now(),
+                })
+                .returning('*');
+
+            await auditLog({
+                action: 'candidate_note_added',
+                entity_type: 'candidate',
+                entity_id: id,
+                user_id: req.user.id,
+                ip_address: req.ip,
+                user_agent: req.get('User-Agent'),
+                new_values: { note_id: noteEntry.id },
+            });
+
+            const userId = candidate.user_id;
+            if (userId) {
+                await NotificationService.create({
+                    userId,
+                    type: 'system_update',
+                    title: 'Mise à jour de votre profil',
+                    message: 'Votre profil candidat a reçu une nouvelle note interne.',
+                    data: {
+                        candidate_id: id,
+                        note_id: noteEntry.id,
+                    },
+                    priority: 'low',
+                    channel: 'in_app',
+                });
+            }
+
+            res.status(201).json({
+                success: true,
+                candidate: {
+                    ...updated,
+                    metadata: newMetadata,
+                },
+                message: 'Note added successfully',
+            });
+        } catch (error) {
+            console.error('Add candidate note error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Internal server error',
+                message: 'Failed to add note',
             });
         }
     }

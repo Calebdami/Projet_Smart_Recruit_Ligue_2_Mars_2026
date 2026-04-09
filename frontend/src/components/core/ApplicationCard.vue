@@ -21,9 +21,8 @@
         </p>
       </div>
       <div class="flex items-center gap-2 ml-2">
-        <!-- AI Score Badge -->
         <div
-          v-if="application.ai_score"
+          v-if="application.ai_score !== null && application.ai_score !== undefined"
           class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
           :class="getScoreColor(application.ai_score)"
         >
@@ -53,10 +52,9 @@
         <span>{{ formatDate(application.applied_at) }}</span>
       </div>
 
-      <!-- Recruiter Score -->
-      <div v-if="application.recruiter_score" class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+      <div v-if="application.recruiter_score !== null && application.recruiter_score !== undefined" class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
         <StarIcon class="w-4 h-4 flex-shrink-0" />
-        <span>Note: {{ application.recruiter_score }}/10</span>
+        <span>Note recruteur: {{ application.recruiter_score }}/100</span>
       </div>
     </div>
 

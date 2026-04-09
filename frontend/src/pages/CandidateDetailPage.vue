@@ -52,14 +52,58 @@
       <div class="card-elevated p-6">
         <h2 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Historique des candidatures</h2>
         <div class="space-y-3">
-          <div v-for="app in applications" :key="app.id" class="flex items-center justify-between rounded-lg border border-slate-200 p-4 dark:border-slate-700">
+          <div
+            v-for="app in applications"
+            :key="app.id"
+            class="flex items-center justify-between rounded-lg border border-slate-200 p-4 dark:border-slate-700"
+          >
             <div>
               <p class="font-medium text-slate-900 dark:text-white">{{ app.job?.title }}</p>
               <p class="text-sm text-slate-500">Postulé le {{ formatDate(app.created_at) }}</p>
             </div>
-            <span :class="getStatusClass(app.status)">{{ getStatusLabel(app.status) }}</span>
+            <div class="flex items-center gap-3">
+              <span :class="getStatusClass(app.status)">{{ getStatusLabel(app.status) }}</span>
+              <router-link :to="`/applications/${app.id}`" class="text-sm text-brand-600 hover:underline">
+                Voir le dossier →
+              </router-link>
+            </div>
           </div>
           <p v-if="!applications.length" class="text-slate-500">Aucune candidature.</p>
+        </div>
+      </div>
+
+      <!-- Global scoring -->
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="card-elevated p-6">
+          <h2 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Évaluation globale</h2>
+          <div class="space-y-2 text-sm">
+            <div>Score IA: <span class="font-semibold text-brand-600">{{ aiScoreDisplay }}</span></div>
+            <div>Score recruteur: <span class="font-semibold text-emerald-600">{{ recruiterScoreDisplay }}</span></div>
+            <div>Score final: <span class="font-semibold text-violet-600">{{ finalScoreDisplay }}</span></div>
+          </div>
+        </div>
+
+        <div v-if="isRecruiterOrAdmin" class="card-elevated p-6">
+          <h2 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Mettre à jour la note recruteur</h2>
+          <div class="space-y-3">
+            <input v-model.number="editableRecruiterScore" type="number" min="0" max="100" class="input-field text-sm" placeholder="Note recruteur (0-100)">
+            <button class="btn-secondary text-sm" @click="saveRecruiterScore">Enregistrer la note</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recruiter notes -->
+      <div v-if="isRecruiterOrAdmin" class="card-elevated p-6">
+        <h2 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Notes recruteur</h2>
+        <textarea v-model="newNote" rows="3" class="input-field" placeholder="Ajouter une note sur ce candidat..."></textarea>
+        <div class="mt-3 flex justify-end">
+          <button class="btn-secondary text-sm" @click="addNote">Ajouter la note</button>
+        </div>
+        <div v-if="candidateNotes.length" class="mt-4 space-y-2 text-xs">
+          <div v-for="n in candidateNotes" :key="n.id || n.created_at" class="rounded border border-slate-200 p-2 dark:border-slate-700">
+            <p class="text-slate-800 dark:text-slate-100">{{ n.note || '-' }}</p>
+            <p class="text-slate-500">{{ formatDate(n.created_at) }}</p>
+          </div>
         </div>
       </div>
 
@@ -83,18 +127,61 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useCandidatesStore } from '@/stores/candidates'
+import { useAuthStore } from '@/stores/auth'
+import { useNotifications } from '@/composables/useNotifications'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 
 const route = useRoute()
 const router = useRouter()
 const candidatesStore = useCandidatesStore()
 const { currentCandidate: candidate, loading } = storeToRefs(candidatesStore)
+const authStore = useAuthStore()
+const { success: showSuccess, error: showError } = useNotifications()
 
 const applications = ref([])
+const editableRecruiterScore = ref(null)
+const newNote = ref('')
+const candidateNotes = ref([])
+
+const isRecruiterOrAdmin = computed(() => ['recruiter', 'admin'].includes(authStore.user?.role))
+
+const metadata = computed(() => {
+  const raw = candidate.value?.metadata
+  if (!raw) return {}
+  if (typeof raw === 'string') {
+    try {
+      return JSON.parse(raw || '{}')
+    } catch {
+      return {}
+    }
+  }
+  return raw
+})
+
+const aiScoreDisplay = computed(() => {
+  if (!candidate.value) return '-'
+  if (candidate.value.smart_score !== undefined && candidate.value.smart_score !== null) return candidate.value.smart_score
+  return 'N/A'
+})
+
+const recruiterScoreDisplay = computed(() => {
+  if (metadata.value.recruiter_score === null || metadata.value.recruiter_score === undefined) return '-'
+  return metadata.value.recruiter_score
+})
+
+const finalScoreDisplay = computed(() => {
+  if (metadata.value.final_score !== undefined && metadata.value.final_score !== null) return metadata.value.final_score
+  const ai = Number(aiScoreDisplay.value)
+  const recruiter = Number(recruiterScoreDisplay.value)
+  if (Number.isNaN(ai) && Number.isNaN(recruiter)) return '-'
+  if (Number.isNaN(ai)) return recruiter
+  if (Number.isNaN(recruiter)) return ai
+  return Math.round(((ai + recruiter) / 2) * 100) / 100
+})
 
 const getRoleLabel = (candidate) => {
   if (!candidate) return 'Non défini'
@@ -106,6 +193,7 @@ const getRoleLabel = (candidate) => {
 
 const getSmartScore = (candidate) => {
   if (!candidate) return 'N/A'
+  if (metadata.value.final_score !== undefined && metadata.value.final_score !== null) return metadata.value.final_score
   if (candidate.smart_score !== undefined && candidate.smart_score !== null) return candidate.smart_score
   if (candidate.parsed_data?.smart_score !== undefined && candidate.parsed_data?.smart_score !== null) return candidate.parsed_data.smart_score
 
@@ -129,6 +217,37 @@ const loadCandidate = async () => {
   // Load candidate applications from store/service when API is available
   const result = await candidatesStore.fetchCandidateApplications?.(route.params.id)
   applications.value = result?.applications || []
+  editableRecruiterScore.value = metadata.value.recruiter_score ?? null
+  candidateNotes.value = Array.isArray(metadata.value.notes) ? metadata.value.notes : []
+}
+
+const saveRecruiterScore = async () => {
+  if (editableRecruiterScore.value === null || Number.isNaN(Number(editableRecruiterScore.value))) {
+    showError('Veuillez saisir une note valide entre 0 et 100')
+    return
+  }
+  const result = await candidatesStore.updateCandidate(route.params.id, { recruiter_score: editableRecruiterScore.value })
+  if (result.success) {
+    showSuccess('Note recruteur du candidat mise à jour')
+    await loadCandidate()
+  } else {
+    showError(result.error || 'Impossible de mettre à jour la note')
+  }
+}
+
+const addNote = async () => {
+  if (!newNote.value.trim()) {
+    showError('La note ne peut pas être vide')
+    return
+  }
+  const result = await candidatesStore.addCandidateNote(route.params.id, newNote.value.trim())
+  if (result.success) {
+    showSuccess('Note ajoutée au profil du candidat')
+    newNote.value = ''
+    await loadCandidate()
+  } else {
+    showError(result.error || 'Impossible d’ajouter la note')
+  }
 }
 
 const uploadCV = async () => {
