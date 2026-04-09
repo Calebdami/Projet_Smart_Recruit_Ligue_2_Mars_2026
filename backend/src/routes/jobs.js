@@ -58,4 +58,10 @@ router.delete('/:id',
   JobController.deleteJob
 );
 
+router.post('/:id/close',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  JobController.closeJob
+);
+
 export default router;

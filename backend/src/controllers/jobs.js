@@ -229,6 +229,61 @@ class JobController {
             });
         }
     }
+
+    // Close job (Recruiter/Admin only)
+    static async closeJob(req, res) {
+        try {
+            const { id } = req.params;
+            const userId = req.user.id;
+
+            const job = await db('jobs').where('id', id).first();
+            if (!job) {
+                return res.status(404).json({
+                    success: false,
+                    error: 'Job not found',
+                });
+            }
+
+            if (job.created_by !== userId && req.user.role !== 'admin') {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Forbidden',
+                    message: 'You do not have permission to close this job',
+                });
+            }
+
+            const [updatedJob] = await db('jobs')
+                .where('id', id)
+                .update({
+                    status: 'closed',
+                    updated_at: db.fn.now(),
+                })
+                .returning('*');
+
+            // Log activity
+            await auditLog({
+                action: 'close',
+                entity_type: 'job',
+                entity_id: id,
+                user_id: userId,
+                ip_address: req.ip,
+                user_agent: req.get('User-Agent'),
+            });
+
+            res.json({
+                success: true,
+                data: updatedJob,
+                message: 'Job closed successfully',
+            });
+        } catch (error) {
+            console.error('Close job error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Internal server error',
+                message: 'Failed to close job',
+            });
+        }
+    }
 }
 
 export { JobController };
