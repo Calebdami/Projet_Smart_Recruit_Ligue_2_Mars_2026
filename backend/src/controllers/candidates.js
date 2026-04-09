@@ -108,6 +108,13 @@ class CandidateController {
             // 1. REQUÊTE DE COMPTAGE (Pour la pagination)
             const countQuery = db('candidates').leftJoin('users', 'candidates.user_id', 'users.id');
 
+            if (req.user.role === 'recruiter') {
+                const subQuery = db('applications')
+                    .whereRaw('applications.candidate_id = candidates.id')
+                    .andWhere('applications.recruiter_id', req.user.id);
+                countQuery.whereExists(subQuery);
+            }
+
             if (search && search.trim()) {
                 countQuery.where(function() {
                     this.where('users.first_name', 'ilike', `%${search}%`)
@@ -131,6 +138,13 @@ class CandidateController {
                     'users.last_name', 
                     'users.email'
                 );
+
+            if (req.user.role === 'recruiter') {
+                const subQuery = db('applications')
+                    .whereRaw('applications.candidate_id = candidates.id')
+                    .andWhere('applications.recruiter_id', req.user.id);
+                dataQuery.whereExists(subQuery);
+            }
 
             // Appliquer les mêmes filtres que pour le count
             if (search && search.trim()) {

@@ -1,10 +1,7 @@
 <template>
-  <DefaultLayout>
-    <AuditTrailPage />
-  </DefaultLayout>
+  <AuditTrailPage />
 </template>
 
 <script setup>
-import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import AuditTrailPage from '@/pages/AuditTrailPage.vue'
 </script>

@@ -20,19 +20,18 @@ export const useCandidatesStore = defineStore('candidates', () => {
   const allCandidates = computed(() => candidates.value)
   const candidatesCount = computed(() => candidates.value.length)
   const topCandidates = computed(() => candidates.value.filter(c => (c.smart_score || 0) >= 80))
-  const newCandidates = computed(() => candidates.value.filter(c => {
-    const daysSince = c.created_at ? (Date.now() - new Date(c.created_at).getTime()) / (1000 * 60 * 60 * 24) : 999
-    return daysSince <= 7
-  }))
+  const newCandidates = computed(() => {
+    const now = Date.now()
+    return candidates.value.filter(c => {
+      const daysSince = c.created_at ? (now - new Date(c.created_at).getTime()) / 86400000 : 999
+      return daysSince <= 7
+    })
+  })
   const isLoading = computed(() => loading.value)
 
   // Stats
   const getLatestApplication = (candidate) => {
-    if (candidate.last_application) return candidate.last_application
-    if (candidate.applications?.length) {
-      return [...candidate.applications].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
-    }
-    return null
+    return candidate.last_application || (candidate.applications?.length ? candidate.applications[0] : null)
   }
 
   const stats = computed(() => ({
@@ -48,7 +47,16 @@ export const useCandidatesStore = defineStore('candidates', () => {
     error.value = null
     try {
       const response = await candidatesService.getCandidates({ ...filters.value, ...params })
-      candidates.value = response.data?.candidates || response.data || []
+      const data = response.data?.candidates || response.data || []
+      
+      // Optimize structure to avoid computing latest application frequently during render
+      candidates.value = data.map(c => {
+        if (!c.last_application && c.applications?.length) {
+          c.last_application = [...c.applications].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
+        }
+        return c
+      })
+      
       return { success: true, candidates: candidates.value }
     } catch (err) {
       error.value = err.response?.data?.message || err.message || 'Failed to fetch candidates'

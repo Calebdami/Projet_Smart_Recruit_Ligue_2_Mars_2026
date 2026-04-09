@@ -39,6 +39,21 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
+  const fetchMyApplications = async () => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.getMyApplications()
+      applications.value = response.data || []
+      return { success: true, applications: applications.value }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to fetch your applications'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const fetchApplication = async (id) => {
     loading.value = true
     error.value = null
@@ -48,6 +63,20 @@ export const useApplicationsStore = defineStore('applications', () => {
       return { success: true, application: currentApplication.value }
     } catch (err) {
       error.value = err.response?.data?.message || err.message || 'Failed to fetch application'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const applyForJob = async (payload) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.applyForJob(payload)
+      return { success: true, data: response.data }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to apply'
       return { success: false, error: error.value }
     } finally {
       loading.value = false
@@ -207,7 +236,9 @@ export const useApplicationsStore = defineStore('applications', () => {
     isLoading,
     // Actions
     fetchApplications,
+    fetchMyApplications,
     fetchApplication,
+    applyForJob,
     updateStatus,
     assignRecruiter,
     bulkAssignRecruiter,

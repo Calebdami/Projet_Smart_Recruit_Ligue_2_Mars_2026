@@ -253,7 +253,11 @@ const handleAvatarChange = async (event) => {
       showError(result.error || 'Échec de mise à jour de la photo')
       return
     }
-    authStore.updateUser({ avatar_url: result.avatarUrl })
+    const newAvatarUrl = result.avatarUrl.includes('?') 
+      ? `${result.avatarUrl}&t=${Date.now()}`
+      : `${result.avatarUrl}?t=${Date.now()}`
+      
+    authStore.updateUser({ avatar_url: newAvatarUrl, avatar: newAvatarUrl })
     showSuccess('Photo de profil mise à jour')
   } catch (error) {
     showError('Échec de l’upload de la photo')

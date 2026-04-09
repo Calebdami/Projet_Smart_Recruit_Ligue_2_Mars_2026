@@ -12,9 +12,10 @@ const confirmModal = reactive({
   loadingText: 'Processing...',
   showCancel: true,
   loading: false,
-  resolve: null,
   reject: null
 })
+
+const isSidebarOpen = ref(false)
 
 let notificationId = 0
 
@@ -176,6 +177,7 @@ export function useUI() {
     // State
     notifications,
     confirmModal,
+    isSidebarOpen,
 
     // Notifications
     addNotification,
@@ -195,6 +197,10 @@ export function useUI() {
     handleConfirm,
     handleCancel,
     closeConfirmModal,
-    setConfirmLoading
+    setConfirmLoading,
+
+    // Sidebar
+    toggleSidebar: () => isSidebarOpen.value = !isSidebarOpen.value,
+    closeSidebar: () => isSidebarOpen.value = false
   }
 }

@@ -36,7 +36,7 @@ const routes = [
     path: '/candidates',
     name: 'Candidates',
     component: () => import('@/pages/CandidatesPage.vue'),
-    meta: { requiresAuth: true, requiresRole: 'admin', layout: 'MainLayout' }
+    meta: { requiresAuth: true, requiresRole: ['admin', 'recruiter'], layout: 'MainLayout' }
   },
   {
     path: '/candidates/assign',
@@ -96,7 +96,13 @@ const routes = [
     path: '/applications',
     name: 'Applications',
     component: () => import('@/pages/ApplicationsListPage.vue'),
-    meta: { requiresAuth: true, layout: 'MainLayout' }
+    meta: { requiresAuth: true, requiresRole: ['admin', 'recruiter'], layout: 'MainLayout' }
+  },
+  {
+    path: '/my-applications',
+    name: 'MyApplications',
+    component: () => import('@/pages/MyApplicationsPage.vue'),
+    meta: { requiresAuth: true, requiresRole: 'candidate', layout: 'MainLayout' }
   },
   {
     path: '/applications/:id',
@@ -202,9 +208,12 @@ router.beforeEach((to, from, next) => {
   }
 
   // Check if route requires specific role
-  if (to.meta.requiresRole && userRole !== to.meta.requiresRole) {
-    next('/')
-    return
+  if (to.meta.requiresRole) {
+    const roles = Array.isArray(to.meta.requiresRole) ? to.meta.requiresRole : [to.meta.requiresRole]
+    if (!roles.includes(userRole)) {
+      next('/')
+      return
+    }
   }
 
   // Redirect authenticated users away from guest routes

@@ -64,8 +64,9 @@
 
     <!-- Candidates Table -->
     <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-black">
-      <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-        <thead class="bg-slate-50 dark:bg-slate-900">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+          <thead class="bg-slate-50 dark:bg-slate-900">
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Candidat</th>
             <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Dernière candidature</th>
@@ -110,6 +111,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <div v-if="loading" class="mt-8 text-center">
@@ -176,11 +178,7 @@ const getScoreClass = (score) => {
 }
 
 const getLatestApplication = (candidate) => {
-  if (candidate.last_application) return candidate.last_application
-  if (candidate.applications?.length) {
-    return [...candidate.applications].sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0]
-  }
-  return null
+  return candidate.last_application || (candidate.applications?.length ? candidate.applications[0] : null)
 }
 
 const getLatestJobTitle = (candidate) => {

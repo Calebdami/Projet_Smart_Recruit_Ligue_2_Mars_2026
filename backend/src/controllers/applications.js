@@ -182,7 +182,9 @@ class ApplicationController {
                 query.where('applications.job_id', job_id);
             }
 
-            if (recruiter_id) {
+            if (req.user.role === 'recruiter') {
+                query.where('applications.recruiter_id', req.user.id);
+            } else if (recruiter_id) {
                 query.where('applications.recruiter_id', recruiter_id);
             }
 

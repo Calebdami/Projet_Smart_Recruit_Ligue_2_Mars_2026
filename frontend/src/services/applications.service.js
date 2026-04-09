@@ -16,6 +16,16 @@ class ApplicationsService {
     return response.data
   }
 
+  async applyForJob(data) {
+    const response = await api.post('/applications/apply', data)
+    return response.data
+  }
+
+  async getMyApplications() {
+    const response = await api.get('/applications/my-applications')
+    return response.data
+  }
+
   async updateApplicationStatus(id, status, notes = '') {
     const response = await api.patch(`/applications/${id}/status`, { status, notes })
     return response.data

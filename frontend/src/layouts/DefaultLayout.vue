@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-b from-slate-50 via-white to-accent-50/20 transition-colors duration-300 dark:from-black dark:via-black dark:to-black mesh-bg">
+  <div class="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 via-white to-accent-50/20 transition-colors duration-300 dark:from-black dark:via-black dark:to-black mesh-bg">
     <nav
       class="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 shadow-sm backdrop-blur-xl transition-colors dark:border-slate-800 dark:bg-black/85"
     >
@@ -25,6 +25,17 @@
         </router-link>
 
         <div class="flex items-center gap-2 sm:gap-4">
+          <!-- Mobile Menu Toggle -->
+          <button 
+            type="button"
+            class="sm:hidden rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+            @click="showMobileMenu = !showMobileMenu"
+          >
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          
           <div class="hidden items-center gap-1 sm:flex">
             <router-link
               v-for="link in navLinks"
@@ -102,11 +113,35 @@
           </div>
         </div>
       </div>
+      
+      <!-- Mobile Menu -->
+      <transition name="slide-down">
+        <div v-show="showMobileMenu" class="sm:hidden border-t border-slate-200/70 bg-white/95 backdrop-blur shadow-lg dark:border-slate-800 dark:bg-black/95">
+          <div class="space-y-1 px-4 py-3 pb-4">
+            <router-link
+              v-for="link in navLinks"
+              v-show="link.show"
+              :key="link.to"
+              :to="link.to"
+              class="block rounded-lg px-3 py-2.5 text-base font-medium transition-colors"
+              :class="
+                route.path === link.to
+                  ? 'bg-brand-50 text-brand-700 dark:bg-brand-950/50 dark:text-brand-300'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white'
+              "
+              @click="showMobileMenu = false"
+            >
+              {{ link.label }}
+            </router-link>
+          </div>
+        </div>
+      </transition>
     </nav>
 
-    <div class="min-h-[calc(100vh-4rem)]">
+    <main class="flex-1 w-full">
       <slot />
-    </div>
+    </main>
+    <TheFooter />
   </div>
 </template>
 
@@ -118,6 +153,7 @@ import { useAuth } from '@/composables/useAuth'
 import { useUI } from '@/composables/useUI'
 import { usePermissions } from '@/composables/usePermissions'
 import ThemeToggle from '@/components/common/ThemeToggle.vue'
+import TheFooter from '@/components/common/TheFooter.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -128,6 +164,7 @@ const { hasPermission } = usePermissions()
 
 const user = computed(() => authStore.user)
 const showProfileMenu = ref(false)
+const showMobileMenu = ref(false)
 
 const initials = computed(() => {
   const u = user.value
@@ -180,5 +217,15 @@ const handleLogout = async () => {
 .dropdown-leave-to {
   opacity: 0;
   transform: translateY(-6px) scale(0.98);
+}
+
+.slide-down-enter-active,
+.slide-down-leave-active {
+  transition: all 0.3s ease-out;
+}
+.slide-down-enter-from,
+.slide-down-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
 }
 </style>

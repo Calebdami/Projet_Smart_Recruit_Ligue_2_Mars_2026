@@ -1,8 +1,15 @@
 <template>
+  <div v-if="isSidebarOpen" class="fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-sm transition-opacity lg:hidden" @click="closeSidebar" aria-hidden="true" />
+
   <aside
-    class="fixed left-0 top-0 z-50 flex h-full w-72 flex-col border-r border-slate-800/80 bg-gradient-to-b from-black via-black to-black text-white shadow-2xl"
+    :class="[
+      'fixed left-0 top-0 z-50 flex h-full w-72 flex-col border-r shadow-2xl transition-transform duration-300 lg:translate-x-0',
+      'border-slate-200 bg-white text-slate-900',
+      'dark:border-slate-800/80 dark:bg-gradient-to-b dark:from-black dark:via-black dark:to-black dark:text-white',
+      isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+    ]"
   >
-    <div class="border-b border-slate-800/80 px-5 py-7">
+    <div class="border-b border-slate-200 px-5 py-7 dark:border-slate-800/80">
       <router-link to="/" class="group flex items-center gap-3">
         <div
           class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-500 text-sm font-bold shadow-lg transition-transform duration-300 group-hover:scale-105"
@@ -11,7 +18,7 @@
         </div>
         <div class="min-w-0">
           <span
-            class="block truncate text-lg font-bold tracking-tight bg-gradient-to-r from-white to-slate-300 bg-clip-text text-transparent"
+            class="block truncate text-lg font-bold tracking-tight text-slate-900 group-hover:text-brand-600 dark:bg-gradient-to-r dark:from-white dark:to-slate-300 dark:bg-clip-text dark:text-transparent transition-colors"
           >
             SmartRecruit
           </span>
@@ -23,13 +30,13 @@
     <nav class="scrollbar-thin flex-1 space-y-1 overflow-y-auto px-3 py-5">
       <div v-for="(item, index) in menuItems" :key="index">
         <router-link
-          v-if="item.to && $can(item.permission)"
+          v-if="item.to && (!item.adminOnly || user?.role === 'admin') && $can(item.permission)"
           :to="item.to"
           :class="[
             'group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300',
             isActive(item.to, item.exact)
-              ? 'bg-gradient-to-r from-brand-600/25 to-accent-600/10 text-white shadow-inner ring-1 ring-brand-500/30'
-              : 'text-slate-400 hover:bg-slate-800/60 hover:text-white',
+              ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-500/30 dark:bg-gradient-to-r dark:from-brand-600/25 dark:to-accent-600/10 dark:text-white dark:shadow-inner'
+              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-white',
           ]"
         >
           <span
@@ -40,8 +47,8 @@
             :class="[
               'flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg transition-colors duration-300',
               isActive(item.to, item.exact)
-                ? 'bg-brand-500/20 text-brand-300'
-                : 'bg-slate-800/50 text-slate-500 group-hover:bg-slate-700/80 group-hover:text-slate-200',
+                ? 'bg-brand-100 text-brand-600 dark:bg-brand-500/20 dark:text-brand-300'
+                : 'bg-slate-100 text-slate-500 group-hover:bg-slate-200 group-hover:text-slate-700 dark:bg-slate-800/50 dark:text-slate-500 dark:group-hover:bg-slate-700/80 dark:group-hover:text-slate-200',
             ]"
           >
             <component :is="item.icon" class="h-5 w-5" />
@@ -148,15 +155,16 @@
 <script setup>
 import { ref, computed, h } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '@/stores/auth'
 import { useAuth } from '@/composables/useAuth'
 import { useUI } from '@/composables/useUI'
 import ThemeToggle from '@/components/common/ThemeToggle.vue'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const { logout } = useAuth()
+const { isSidebarOpen, closeSidebar } = useUI()
 const ui = useUI()
 const userMenuOpen = ref(false)
 
@@ -199,12 +207,13 @@ const DocumentIcon = () =>
 
 const menuItems = [
   { label: 'Tableau de bord', to: '/', icon: HomeIcon, permission: 'view_own_profile' },
+  { label: 'Mes Candidatures', to: '/my-applications', icon: DocumentIcon, permission: 'create_applications' },
   { label: 'Utilisateurs', to: '/users', icon: UsersIcon, permission: 'view_users' },
   { label: 'Candidats', to: '/candidates', icon: UsersIcon, permission: 'view_candidates', exact: true },
-  { label: 'Assignation', to: '/candidates/assign', icon: UserGroupIcon, permission: 'view_candidates' },
+  { label: 'Assignation', to: '/candidates/assign', icon: UserGroupIcon, permission: 'view_candidates', adminOnly: true },
   { label: 'Offres', to: '/jobs', icon: BriefcaseIcon, permission: 'view_jobs' },
   { divider: true },
-  { label: 'Analytique', to: '/analytics', icon: ChartIcon, permission: 'view_analytics' },
+  { label: 'Analytique', to: '/analytics', icon: ChartIcon, permission: 'view_analytics', adminOnly: true },
   { label: 'Audit', to: '/audit', icon: DocumentIcon, permission: 'view_audit_logs' },
 ]
 

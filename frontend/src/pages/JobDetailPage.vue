@@ -57,10 +57,15 @@
             </dl>
           </div>
 
-          <div class="rounded-xl bg-brand-50 p-4 dark:bg-brand-950/30">
+          <div v-if="$can('review_applications')" class="rounded-xl bg-brand-50 p-4 dark:bg-brand-950/30">
             <h3 class="font-semibold text-brand-900 dark:text-brand-200">Candidatures</h3>
             <p class="mt-1 text-2xl font-bold text-brand-700 dark:text-brand-300">{{ job.applications_count || 0 }}</p>
             <router-link :to="`/applications?job_id=${job.id}`" class="mt-2 text-sm text-brand-600 hover:underline dark:text-brand-400">Voir les candidatures →</router-link>
+          </div>
+          
+          <div v-if="!$can('review_applications') && job.status === 'published'" class="rounded-xl border border-brand-100 bg-white p-4 shadow-sm dark:border-brand-900/50 dark:bg-black">
+            <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Êtes-vous intéressé(e) ?</h3>
+            <button @click="showApplyModal = true" class="btn-primary w-full shadow-md justify-center">Postuler maintenant</button>
           </div>
         </div>
       </div>
@@ -68,6 +73,43 @@
 
     <div v-else-if="loading" class="text-center py-12">
       <BaseLoading />
+    </div>
+
+    <!-- Apply Modal -->
+    <div
+      v-if="showApplyModal"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      @click.self="showApplyModal = false"
+    >
+      <div class="mx-4 w-full max-w-xl rounded-2xl bg-white shadow-2xl dark:bg-slate-900">
+        <div class="flex items-center justify-between border-b border-slate-200 px-6 py-4 dark:border-slate-700">
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white">Postuler à cette offre</h2>
+          <button type="button" class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800" @click="showApplyModal = false">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        
+        <form @submit.prevent="submitApplication" class="p-6 space-y-4">
+          <div>
+            <label class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">Lettre de motivation</label>
+            <textarea
+              v-model="coverLetter"
+              class="input-field min-h-[160px] resize-y"
+              placeholder="Expliquez pourquoi vous êtes le candidat idéal pour ce poste..."
+              required
+            ></textarea>
+            <p class="mt-2 text-xs text-slate-500">Votre profil public et votre score de matching y seront automatiquement attachés. Assurez-vous d'avoir rempli votre profil !</p>
+          </div>
+          
+          <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-700">
+            <button type="button" class="btn-secondary" @click="showApplyModal = false" :disabled="submitting">Annuler</button>
+            <button type="submit" class="btn-primary" :disabled="submitting">
+              <span v-if="submitting">Envoi en cours...</span>
+              <span v-else>Soumettre ma candidature</span>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>
@@ -77,12 +119,21 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useJobsStore } from '@/stores/jobs'
+import { useApplicationsStore } from '@/stores/applications'
+import { useNotifications } from '@/composables/useNotifications'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 
 const route = useRoute()
 const router = useRouter()
 const jobsStore = useJobsStore()
+const applicationsStore = useApplicationsStore()
+const { success: showSuccess, error: showError } = useNotifications()
+
 const { currentJob: job, loading } = storeToRefs(jobsStore)
+
+const showApplyModal = ref(false)
+const coverLetter = ref('')
+const submitting = ref(false)
 
 const goBackSafely = () => {
   if (window.history.length > 1) {
@@ -111,6 +162,29 @@ const getStatusClass = (status) => {
 
 const getStatusLabel = (status) => ({ draft: 'Brouillon', published: 'Publié', closed: 'Clôturé' }[status])
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('fr-FR') : '-'
+
+const submitApplication = async () => {
+  submitting.value = true
+  try {
+    const result = await applicationsStore.applyForJob({
+      job_id: job.value.id,
+      cover_letter: coverLetter.value
+    })
+    
+    if (result.success) {
+      showSuccess('Candidature envoyée avec succès !')
+      showApplyModal.value = false
+      coverLetter.value = ''
+      router.push('/my-applications')
+    } else {
+      showError(result.error || 'Erreur lors de la candidature (profil incomplet ?)')
+    }
+  } catch (error) {
+    showError("Une erreur inattendue s'est produite lors de l'envoi")
+  } finally {
+    submitting.value = false
+  }
+}
 
 onMounted(() => loadJob())
 </script>
