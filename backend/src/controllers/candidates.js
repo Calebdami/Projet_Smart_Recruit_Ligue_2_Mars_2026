@@ -3,8 +3,53 @@ import { auditLog } from '../utils/audit.js';
 import { ResumeParser } from '../utils/resumeParser.js';
 import path from 'path';
 import fs from 'fs/promises';
+import crypto from 'crypto';
+import sharp from 'sharp';
 
 class CandidateController {
+    static async saveUploadedFile(file) {
+        const uploadDir = path.resolve(process.cwd(), 'uploads', 'resumes');
+        await fs.mkdir(uploadDir, { recursive: true });
+        const ext = path.extname(file.originalname || '').toLowerCase() || '.bin';
+        const filename = `${crypto.randomUUID()}${ext}`;
+        const fullPath = path.join(uploadDir, filename);
+        await fs.writeFile(fullPath, file.buffer);
+        return {
+            publicPath: `/uploads/resumes/${filename}`,
+            fullPath,
+        };
+    }
+
+    static async buildParsedData(file) {
+        if (file.mimetype === 'application/pdf') {
+            return ResumeParser.parse(file.buffer);
+        }
+        if (file.mimetype.startsWith('image/')) {
+            const metadata = await sharp(file.buffer).metadata();
+            return {
+                semantic_hash: crypto.createHash('sha256').update(file.buffer).digest('hex'),
+                email: null,
+                phone: null,
+                skills: [],
+                languages: [],
+                experience_years: 0,
+                image_metadata: {
+                    format: metadata.format || null,
+                    width: metadata.width || null,
+                    height: metadata.height || null,
+                },
+            };
+        }
+        return {
+            semantic_hash: crypto.createHash('sha256').update(file.buffer).digest('hex'),
+            email: null,
+            phone: null,
+            skills: [],
+            languages: [],
+            experience_years: 0,
+        };
+    }
+
     // Get candidate profile (Self)
     static async getProfile(req, res) {
         try {
@@ -229,15 +274,15 @@ class CandidateController {
                 });
             }
 
-            // Parse CV via utility
-            const parsedData = await ResumeParser.parse(file.buffer);
+            const parsedData = await CandidateController.buildParsedData(file);
+            const { publicPath } = await CandidateController.saveUploadedFile(file);
 
             // Check if profile exists
             const existingProfile = await db('candidates').where('user_id', userId).first();
 
             let candidate;
             const updateData = {
-                resume_path: file.path || `uploads/resumes/${file.filename}`,
+                resume_path: publicPath,
                 resume_original_name: file.originalname,
                 resume_mime_type: file.mimetype,
                 resume_size: file.size,
@@ -281,6 +326,7 @@ class CandidateController {
                         skills: parsedData.skills,
                         experience_years: parsedData.experience_years,
                         email: parsedData.email,
+                        mime_type: file.mimetype,
                     }
                 },
                 message: 'Resume uploaded and parsed successfully',
@@ -295,10 +341,39 @@ class CandidateController {
         }
     }
 
+    static async uploadResumeById(req, res) {
+        try {
+            const userId = req.user.id;
+            const { id } = req.params;
+            const candidate = await db('candidates').where('user_id', userId).first();
+            if (!candidate || candidate.id !== id) {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Forbidden',
+                    message: 'You can only upload CV for your own profile',
+                });
+            }
+            return CandidateController.uploadResume(req, res);
+        } catch (error) {
+            console.error('Upload resume by ID error:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Internal server error',
+                message: 'Failed to upload resume',
+            });
+        }
+    }
+
     // Get candidate CV (Recruiter only)
     static async getCandidateCV(req, res) {
         try {
             const { id } = req.params;
+            if (req.user.role === 'candidate') {
+                const ownCandidate = await db('candidates').where('user_id', req.user.id).first();
+                if (!ownCandidate || ownCandidate.id !== id) {
+                    return res.status(403).json({ success: false, error: 'Forbidden' });
+                }
+            }
             const candidate = await db('candidates')
                 .where('id', id)
                 .select('id', 'resume_path', 'resume_original_name', 'skills', 'years_experience', 'semantic_hash')
@@ -340,6 +415,12 @@ class CandidateController {
     static async parseCV(req, res) {
         try {
             const { id } = req.params;
+            if (req.user.role === 'candidate') {
+                const ownCandidate = await db('candidates').where('user_id', req.user.id).first();
+                if (!ownCandidate || ownCandidate.id !== id) {
+                    return res.status(403).json({ success: false, error: 'Forbidden' });
+                }
+            }
             const candidate = await db('candidates').where('id', id).first();
 
             if (!candidate || !candidate.resume_path) {

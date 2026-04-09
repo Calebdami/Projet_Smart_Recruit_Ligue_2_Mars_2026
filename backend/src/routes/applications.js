@@ -3,8 +3,18 @@ import { ApplicationController } from '../controllers/applications.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { body } from 'express-validator';
 import { validateRequest } from '../middleware/validation.js';
+import multer from 'multer';
 
 const router = express.Router();
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+    if (allowed.includes(file.mimetype)) return cb(null, true);
+    cb(new Error('Only PDF/PNG/JPG/WEBP files are allowed'), false);
+  },
+});
 
 // Validation rules
 const applicationValidation = [
@@ -29,6 +39,15 @@ const bulkAssignRecruiterValidation = [
   // recruiter_id pas de validation stricte - le contrôleur gère null et les UUID
 ];
 
+const scoreValidation = [
+  body('recruiter_score').isFloat({ min: 0, max: 100 }).withMessage('Recruiter score must be between 0 and 100'),
+  body('comment').optional().isString(),
+];
+
+const noteValidation = [
+  body('note').isString().withMessage('Note is required'),
+];
+
 // Candidate routes
 router.post('/apply',
   authenticate,
@@ -42,6 +61,34 @@ router.get('/my-applications',
   authenticate,
   authorize(['candidate']),
   ApplicationController.getMyApplications
+);
+
+router.patch('/:id/candidate-update',
+  authenticate,
+  authorize(['candidate']),
+  body('cover_letter').optional().isString(),
+  body('screening_answers').optional().isObject(),
+  validateRequest,
+  ApplicationController.updateOwnApplication
+);
+
+router.get('/:id/documents',
+  authenticate,
+  authorize(['candidate', 'recruiter', 'admin']),
+  ApplicationController.getApplicationDocuments
+);
+
+router.post('/:id/documents',
+  authenticate,
+  authorize(['candidate']),
+  upload.single('document'),
+  ApplicationController.uploadApplicationDocument
+);
+
+router.delete('/:id/documents/:documentId',
+  authenticate,
+  authorize(['candidate']),
+  ApplicationController.deleteApplicationDocument
 );
 
 // Recruiter/Admin routes
@@ -63,12 +110,34 @@ router.get('/:id',
   ApplicationController.getApplication
 );
 
+router.get('/:id/timeline',
+  authenticate,
+  authorize(['recruiter', 'admin', 'candidate']),
+  ApplicationController.getApplicationTimeline
+);
+
 router.patch('/:id/status',
   authenticate,
   authorize(['recruiter', 'admin']),
   updateStatusValidation,
   validateRequest,
   ApplicationController.updateStatus
+);
+
+router.patch('/:id/score',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  scoreValidation,
+  validateRequest,
+  ApplicationController.updateRecruiterScore
+);
+
+router.post('/:id/notes',
+  authenticate,
+  authorize(['recruiter', 'admin']),
+  noteValidation,
+  validateRequest,
+  ApplicationController.addRecruiterNote
 );
 
 router.patch('/:id/assign',

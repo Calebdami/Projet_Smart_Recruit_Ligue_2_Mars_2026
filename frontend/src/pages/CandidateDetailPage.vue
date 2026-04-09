@@ -132,7 +132,16 @@ const loadCandidate = async () => {
 }
 
 const uploadCV = async () => {
-  // TODO: Implement file picker and upload
+  const input = document.createElement('input')
+  input.type = 'file'
+  input.accept = '.pdf,image/png,image/jpeg,image/webp'
+  input.onchange = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file || !candidate.value?.id) return
+    await candidatesStore.uploadCV(candidate.value.id, file)
+    await loadCandidate()
+  }
+  input.click()
 }
 
 const getStatusClass = (status) => {

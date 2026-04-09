@@ -31,6 +31,9 @@
               <th scope="col" class="px-6 py-4 font-medium">Date de dépôt</th>
               <th scope="col" class="px-6 py-4 font-medium">État de l'offre</th>
               <th scope="col" class="px-6 py-4 font-medium">Statut de la Candidature</th>
+              <th scope="col" class="px-6 py-4 font-medium">Scores</th>
+              <th scope="col" class="px-6 py-4 font-medium">Documents</th>
+              <th scope="col" class="px-6 py-4 font-medium">Action</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200 dark:divide-slate-700/50">
@@ -53,6 +56,17 @@
                 <span :class="getApplicationStatusClass(app.status)">
                   {{ getApplicationStatusLabel(app.status) }}
                 </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-xs space-y-1">
+                  <div class="font-medium text-brand-600">IA: {{ app.ai_score ?? '-' }}</div>
+                  <div class="text-emerald-600">Recruteur: {{ app.recruiter_score ?? '-' }}</div>
+                  <div class="text-violet-600 font-semibold">Final: {{ app.final_score ?? computeFinalScore(app.ai_score, app.recruiter_score) ?? '-' }}</div>
+                </div>
+              </td>
+              <td class="px-6 py-4">{{ app.documents_count ?? 0 }}</td>
+              <td class="px-6 py-4">
+                <router-link :to="`/applications/${app.id}`" class="text-brand-600 hover:underline">Détails</router-link>
               </td>
             </tr>
           </tbody>
@@ -123,5 +137,14 @@ const getApplicationStatusLabel = (status) => {
     withdrawn: 'Retirée'
   }
   return labels[status] || status
+}
+
+const computeFinalScore = (aiScore, recruiterScore) => {
+  const ai = Number(aiScore)
+  const recruiter = Number(recruiterScore)
+  if (Number.isNaN(ai) && Number.isNaN(recruiter)) return null
+  if (Number.isNaN(ai)) return recruiter
+  if (Number.isNaN(recruiter)) return ai
+  return Math.round(((ai + recruiter) / 2) * 100) / 100
 }
 </script>

@@ -30,7 +30,7 @@
     <nav class="scrollbar-thin flex-1 space-y-1 overflow-y-auto px-3 py-5">
       <div v-for="(item, index) in menuItems" :key="index">
         <router-link
-          v-if="item.to && (!item.adminOnly || user?.role === 'admin') && $can(item.permission)"
+          v-if="item.to && (!item.adminOnly || user?.role === 'admin') && (!item.allowedRoles || item.allowedRoles.includes(user?.role)) && $can(item.permission)"
           :to="item.to"
           :class="[
             'group relative flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition-all duration-300',
@@ -207,7 +207,7 @@ const DocumentIcon = () =>
 
 const menuItems = [
   { label: 'Tableau de bord', to: '/', icon: HomeIcon, permission: 'view_own_profile' },
-  { label: 'Mes Candidatures', to: '/my-applications', icon: DocumentIcon, permission: 'create_applications' },
+  { label: 'Mes Candidatures', to: '/my-applications', icon: DocumentIcon, permission: 'create_applications', allowedRoles: ['candidate'] },
   { label: 'Utilisateurs', to: '/users', icon: UsersIcon, permission: 'view_users' },
   { label: 'Candidats', to: '/candidates', icon: UsersIcon, permission: 'view_candidates', exact: true },
   { label: 'Assignation', to: '/candidates/assign', icon: UserGroupIcon, permission: 'view_candidates', adminOnly: true },

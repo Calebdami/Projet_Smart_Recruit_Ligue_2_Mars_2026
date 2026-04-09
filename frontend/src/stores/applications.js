@@ -83,6 +83,70 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
+  const updateOwnApplication = async (id, payload) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.updateOwnApplication(id, payload)
+      const updated = response.data || response
+      if (currentApplication.value?.id === id) {
+        currentApplication.value = { ...currentApplication.value, ...updated }
+      }
+      const index = applications.value.findIndex(a => a.id === id)
+      if (index !== -1) {
+        applications.value[index] = { ...applications.value[index], ...updated }
+      }
+      return { success: true, application: updated }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to update application'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchApplicationDocuments = async (id) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.getApplicationDocuments(id)
+      return { success: true, documents: response.data || [] }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to fetch documents'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const uploadApplicationDocument = async (id, file) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.uploadApplicationDocument(id, file)
+      return { success: true, document: response.data }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to upload document'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const deleteApplicationDocument = async (id, documentId) => {
+    loading.value = true
+    error.value = null
+    try {
+      await applicationsService.deleteApplicationDocument(id, documentId)
+      return { success: true }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to delete document'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const updateStatus = async (id, status, notes = '') => {
     loading.value = true
     error.value = null
@@ -165,6 +229,42 @@ export const useApplicationsStore = defineStore('applications', () => {
     }
   }
 
+  const updateRecruiterScore = async (id, recruiterScore, comment = '') => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.updateRecruiterScore(id, recruiterScore, comment)
+      const updated = response.data || response
+      const index = applications.value.findIndex(a => a.id === id)
+      if (index !== -1) {
+        applications.value[index] = { ...applications.value[index], ...updated }
+      }
+      if (currentApplication.value?.id === id) {
+        currentApplication.value = { ...currentApplication.value, ...updated }
+      }
+      return { success: true, data: updated }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to update recruiter score'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const fetchTimeline = async (id) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await applicationsService.getTimeline(id)
+      return { success: true, timeline: response.data || [] }
+    } catch (err) {
+      error.value = err.response?.data?.message || err.message || 'Failed to fetch timeline'
+      return { success: false, error: error.value }
+    } finally {
+      loading.value = false
+    }
+  }
+
   const setFilters = (newFilters) => {
     filters.value = { ...filters.value, ...newFilters }
   }
@@ -239,12 +339,18 @@ export const useApplicationsStore = defineStore('applications', () => {
     fetchMyApplications,
     fetchApplication,
     applyForJob,
+    updateOwnApplication,
     updateStatus,
     assignRecruiter,
     bulkAssignRecruiter,
     addNote,
+    updateRecruiterScore,
+    fetchTimeline,
     dragDropStatus,
     bulkDragDropStatus,
+    fetchApplicationDocuments,
+    uploadApplicationDocument,
+    deleteApplicationDocument,
     setFilters,
     clearError
   }

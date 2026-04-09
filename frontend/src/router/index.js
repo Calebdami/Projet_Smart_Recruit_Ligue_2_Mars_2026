@@ -87,6 +87,12 @@ const routes = [
     meta: { requiresAuth: true, layout: 'MainLayout' }
   },
   {
+    path: '/jobs/:id/apply',
+    name: 'JobApply',
+    component: () => import('@/pages/JobApplyPage.vue'),
+    meta: { requiresAuth: true, requiresRole: 'candidate', layout: 'MainLayout' }
+  },
+  {
     path: '/jobs/:id/edit',
     name: 'JobEdit',
     component: () => import('@/pages/JobEditPage.vue'),

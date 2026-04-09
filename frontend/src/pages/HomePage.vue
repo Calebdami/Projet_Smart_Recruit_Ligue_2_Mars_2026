@@ -260,7 +260,9 @@ const isDev = computed(() => import.meta.env.DEV)
 
 // Fetch real data on mount
 onMounted(() => {
-  analyticsStore.fetchDashboardStats()
+  if (['admin', 'recruiter'].includes(user.value?.role)) {
+    analyticsStore.fetchDashboardStats()
+  }
 })
 
 // Test notification function

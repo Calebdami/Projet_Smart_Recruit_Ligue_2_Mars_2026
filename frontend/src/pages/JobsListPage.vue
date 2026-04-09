@@ -63,12 +63,19 @@
           </div>
           <div class="ml-4 flex items-center gap-2">
             <router-link :to="`/jobs/${job.id}`" class="btn-secondary text-sm">Voir</router-link>
-            <router-link v-if="$can('edit_jobs')" :to="`/jobs/${job.id}/edit`" class="btn-secondary text-sm">Modifier</router-link>
+            <router-link
+              v-if="isCandidate && $can('create_applications') && isJobOpenForApplications(job.status)"
+              :to="`/jobs/${job.id}/apply`"
+              class="btn-primary text-sm"
+            >
+              Postuler
+            </router-link>
+            <router-link v-if="$can('update_jobs')" :to="`/jobs/${job.id}/edit`" class="btn-secondary text-sm">Modifier</router-link>
           </div>
         </div>
       </div>
     </div>
-
+    
     <div v-if="loading" class="mt-8 text-center">
       <BaseLoading />
     </div>
@@ -79,9 +86,11 @@
 import { ref, onMounted, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useJobsStore } from '@/stores/jobs'
+import { useAuthStore } from '@/stores/auth'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 
 const jobsStore = useJobsStore()
+const authStore = useAuthStore()
 const { jobs, loading, filters: storeFilters } = storeToRefs(jobsStore)
 
 // Sync local filters with store filters
@@ -115,6 +124,9 @@ const getStatusLabel = (status) => {
   const labels = { draft: 'Brouillon', published: 'Publié', closed: 'Clôturé' }
   return labels[status] || status
 }
+
+const isJobOpenForApplications = (status) => ['published', 'open'].includes(status)
+const isCandidate = authStore.user?.role === 'candidate'
 
 onMounted(() => loadJobs())
 </script>

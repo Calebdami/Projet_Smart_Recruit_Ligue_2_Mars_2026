@@ -26,6 +26,30 @@ class ApplicationsService {
     return response.data
   }
 
+  async updateOwnApplication(id, data) {
+    const response = await api.patch(`/applications/${id}/candidate-update`, data)
+    return response.data
+  }
+
+  async getApplicationDocuments(id) {
+    const response = await api.get(`/applications/${id}/documents`)
+    return response.data
+  }
+
+  async uploadApplicationDocument(id, file) {
+    const formData = new FormData()
+    formData.append('document', file)
+    const response = await api.post(`/applications/${id}/documents`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  }
+
+  async deleteApplicationDocument(id, documentId) {
+    const response = await api.delete(`/applications/${id}/documents/${documentId}`)
+    return response.data
+  }
+
   async updateApplicationStatus(id, status, notes = '') {
     const response = await api.patch(`/applications/${id}/status`, { status, notes })
     return response.data
@@ -48,6 +72,16 @@ class ApplicationsService {
 
   async addNote(id, note) {
     const response = await api.post(`/applications/${id}/notes`, { note })
+    return response.data
+  }
+
+  async updateRecruiterScore(id, recruiterScore, comment = '') {
+    const response = await api.patch(`/applications/${id}/score`, { recruiter_score: recruiterScore, comment })
+    return response.data
+  }
+
+  async getTimeline(id) {
+    const response = await api.get(`/applications/${id}/timeline`)
     return response.data
   }
 

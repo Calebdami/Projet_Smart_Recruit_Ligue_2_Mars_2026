@@ -2,8 +2,108 @@ import { db } from '../config/database.js';
 import { auditLog } from '../utils/audit.js';
 import { ScoringEngine } from '../utils/scoringEngine.js';
 import { NotificationService } from '../services/notifications.js';
+import path from 'path';
+import fs from 'fs/promises';
+import crypto from 'crypto';
+import pdf from 'pdf-parse';
+import sharp from 'sharp';
 
 class ApplicationController {
+    static KEYWORD_WEIGHTS = {
+        leadership: 8,
+        communication: 6,
+        teamwork: 6,
+        javascript: 8,
+        typescript: 8,
+        node: 8,
+        react: 7,
+        vue: 7,
+        sql: 6,
+        docker: 6,
+        api: 5,
+    };
+
+    static extractKeywordScore(text) {
+        const source = (text || '').toLowerCase();
+        if (!source.trim()) return 0;
+        let score = 0;
+        for (const [keyword, weight] of Object.entries(this.KEYWORD_WEIGHTS)) {
+            if (source.includes(keyword)) score += weight;
+        }
+        return Math.min(100, score);
+    }
+
+    static normalizeScore(value) {
+        const n = Number(value);
+        if (Number.isNaN(n)) return null;
+        return Math.max(0, Math.min(100, Math.round(n * 100) / 100));
+    }
+
+    static computeFinalScore(aiScore, recruiterScore) {
+        const ai = this.normalizeScore(aiScore);
+        const recruiter = this.normalizeScore(recruiterScore);
+        if (ai === null && recruiter === null) return null;
+        if (ai === null) return recruiter;
+        if (recruiter === null) return ai;
+        return Math.round(((ai + recruiter) / 2) * 100) / 100;
+    }
+
+    static async logApplicationEvent({ applicationId, userId, action, details = {} }) {
+        await auditLog({
+            action,
+            entity_type: 'application',
+            entity_id: applicationId,
+            user_id: userId,
+            ip_address: null,
+            user_agent: 'system',
+            new_values: details,
+        });
+    }
+
+    static async recalculateApplicationScores(applicationId) {
+        const application = await db('applications').where('id', applicationId).first();
+        if (!application) return null;
+        const job = await db('jobs').where('id', application.job_id).first();
+        const candidate = await db('candidates').where('id', application.candidate_id).first();
+        const docs = await db('application_documents').where('application_id', applicationId);
+
+        const baseAi = ScoringEngine.calculateScore(candidate || {}, job || {});
+        const coverLetterScore = this.extractKeywordScore(application.cover_letter);
+        const resumeSkillsText = typeof candidate?.skills === 'string'
+            ? candidate.skills
+            : JSON.stringify(candidate?.skills || []);
+        const resumeKeywordScore = this.extractKeywordScore(resumeSkillsText);
+        const docsText = docs
+            .map((d) => (typeof d.scan_data === 'string' ? d.scan_data : JSON.stringify(d.scan_data || {})))
+            .join(' ');
+        const documentsKeywordScore = this.extractKeywordScore(docsText);
+
+        const aiScore = this.normalizeScore(
+            baseAi * 0.6 + coverLetterScore * 0.2 + resumeKeywordScore * 0.1 + documentsKeywordScore * 0.1
+        );
+        const finalScore = ApplicationController.computeFinalScore(aiScore, application.recruiter_score);
+
+        const [updated] = await db('applications')
+            .where('id', applicationId)
+            .update({
+                ai_score: aiScore,
+                metadata: JSON.stringify({
+                    ...(typeof application.metadata === 'string' ? JSON.parse(application.metadata || '{}') : (application.metadata || {})),
+                    score_breakdown: {
+                        base_ai: baseAi,
+                        cover_letter_keywords: coverLetterScore,
+                        resume_keywords: resumeKeywordScore,
+                        documents_keywords: documentsKeywordScore,
+                    },
+                    final_score: finalScore,
+                }),
+                updated_at: db.fn.now(),
+            })
+            .returning('*');
+
+        return updated;
+    }
+
     // Apply for a job (Candidate only)
     static async apply(req, res) {
         try {
@@ -12,7 +112,7 @@ class ApplicationController {
 
             // 1. Check if job exists and is open
             const job = await db('jobs').where('id', job_id).first();
-            if (!job || job.status !== 'open') {
+            if (!job || !['open', 'published'].includes(job.status)) {
                 return res.status(404).json({
                     success: false,
                     error: 'Job not found or not accepting applications',
@@ -20,13 +120,15 @@ class ApplicationController {
             }
 
             // 2. Check if candidate profile exists
-            const candidate = await db('candidates').where('user_id', userId).first();
+            let candidate = await db('candidates').where('user_id', userId).first();
             if (!candidate) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Profile incomplete',
-                    message: 'Please complete your candidate profile before applying',
-                });
+                [candidate] = await db('candidates')
+                    .insert({
+                        user_id: userId,
+                        created_at: db.fn.now(),
+                        updated_at: db.fn.now(),
+                    })
+                    .returning('*');
             }
 
             // 3. Check for existing application
@@ -42,7 +144,7 @@ class ApplicationController {
                 });
             }
 
-            // 4. Calculate AI Matching Score
+            // 4. Calculate initial AI score
             const aiScore = ScoringEngine.calculateScore(candidate, job);
 
             // 5. Create application
@@ -53,6 +155,9 @@ class ApplicationController {
                     cover_letter,
                     screening_answers: JSON.stringify(screening_answers || {}),
                     ai_score: aiScore,
+                    metadata: JSON.stringify({
+                        final_score: aiScore,
+                    }),
                     status: 'new',
                     applied_at: db.fn.now(),
                     created_at: db.fn.now(),
@@ -114,13 +219,15 @@ class ApplicationController {
     static async getMyApplications(req, res) {
         try {
             const userId = req.user.id;
-            const candidate = await db('candidates').where('user_id', userId).first();
-
+            let candidate = await db('candidates').where('user_id', userId).first();
             if (!candidate) {
-                return res.status(404).json({
-                    success: false,
-                    error: 'Candidate profile not found',
-                });
+                [candidate] = await db('candidates')
+                    .insert({
+                        user_id: userId,
+                        created_at: db.fn.now(),
+                        updated_at: db.fn.now(),
+                    })
+                    .returning('*');
             }
 
             const applications = await db('applications')
@@ -129,9 +236,30 @@ class ApplicationController {
                 .where('applications.candidate_id', candidate.id)
                 .orderBy('applications.applied_at', 'desc');
 
+            const applicationIds = applications.map((app) => app.id);
+            let documentCounts = {};
+            if (applicationIds.length > 0) {
+                const docs = await db('application_documents')
+                    .whereIn('application_id', applicationIds)
+                    .select('application_id')
+                    .count('id as count')
+                    .groupBy('application_id');
+                documentCounts = docs.reduce((acc, row) => {
+                    acc[row.application_id] = Number(row.count || 0);
+                    return acc;
+                }, {});
+            }
+
             res.json({
                 success: true,
-                data: applications,
+                data: applications.map((app) => ({
+                    ...app,
+                    documents_count: documentCounts[app.id] || 0,
+                    final_score: (() => {
+                        const metadata = typeof app.metadata === 'string' ? JSON.parse(app.metadata || '{}') : (app.metadata || {});
+                        return metadata.final_score ?? ApplicationController.computeFinalScore(app.ai_score, app.recruiter_score);
+                    })(),
+                })),
             });
         } catch (error) {
             console.error('Get my applications error:', error);
@@ -195,7 +323,13 @@ class ApplicationController {
             res.json({
                 success: true,
                 data: {
-                    applications,
+                    applications: applications.map((app) => {
+                        const metadata = typeof app.metadata === 'string' ? JSON.parse(app.metadata || '{}') : (app.metadata || {});
+                        return {
+                            ...app,
+                            final_score: metadata.final_score ?? ApplicationController.computeFinalScore(app.ai_score, app.recruiter_score),
+                        };
+                    }),
                 },
             });
         } catch (error) {
@@ -226,6 +360,8 @@ class ApplicationController {
                     'candidates.location',
                     'candidates.headline',
                     'candidates.experience_level',
+                    'candidates.resume_path',
+                    'candidates.resume_original_name',
                     'candidate_user.first_name',
                     'candidate_user.last_name',
                     'candidate_user.email',
@@ -269,9 +405,23 @@ class ApplicationController {
                         status: application.status,
                         ai_score: application.ai_score,
                         recruiter_score: application.recruiter_score,
+                        final_score: (() => {
+                            const metadata = typeof application.metadata === 'string'
+                                ? JSON.parse(application.metadata || '{}')
+                                : (application.metadata || {});
+                            return metadata.final_score ?? ApplicationController.computeFinalScore(application.ai_score, application.recruiter_score);
+                        })(),
                         cover_letter: application.cover_letter,
+                        screening_answers: typeof application.screening_answers === 'string'
+                            ? JSON.parse(application.screening_answers || '{}')
+                            : (application.screening_answers || {}),
                         applied_at: application.applied_at,
                         created_at: application.created_at,
+                        notes: typeof application.notes === 'string'
+                            ? JSON.parse(application.notes || '[]')
+                            : (application.notes || []),
+                        cv_url: application.resume_path,
+                        cv_original_name: application.resume_original_name,
                         candidate: {
                             id: application.candidate_id,
                             first_name: application.first_name,
@@ -295,7 +445,8 @@ class ApplicationController {
                             first_name: application.recruiter_first_name,
                             last_name: application.recruiter_last_name,
                             email: application.recruiter_email
-                        } : null
+                        } : null,
+                        documents: await ApplicationController.listDocumentsForApplication(application.id),
                     }
                 },
             });
@@ -374,6 +525,12 @@ class ApplicationController {
                     updated_at: db.fn.now(),
                 })
                 .returning('*');
+            await ApplicationController.logApplicationEvent({
+                applicationId: id,
+                userId,
+                action: 'application_status_updated',
+                details: { old_status: application.status, new_status: status, next_step },
+            });
 
             // Notify candidate about status update
             const candidateUser = await db('candidates')
@@ -577,6 +734,12 @@ class ApplicationController {
                     updated_at: db.fn.now(),
                 })
                 .returning('*');
+            await ApplicationController.logApplicationEvent({
+                applicationId: id,
+                userId,
+                action: 'application_status_drag_drop',
+                details: { old_status: oldStatus, new_status: status },
+            });
 
             // Log activity
             await auditLog({
@@ -726,6 +889,407 @@ class ApplicationController {
                 success: false,
                 error: 'Internal server error',
             });
+        }
+    }
+
+    static async updateOwnApplication(req, res) {
+        try {
+            const { id } = req.params;
+            const { cover_letter, screening_answers } = req.body;
+            const candidate = await db('candidates').where('user_id', req.user.id).first();
+            if (!candidate) {
+                return res.status(404).json({ success: false, error: 'Candidate profile not found' });
+            }
+
+            const application = await db('applications').where({ id, candidate_id: candidate.id }).first();
+            if (!application) {
+                return res.status(404).json({ success: false, error: 'Application not found' });
+            }
+
+            if (!['new', 'reviewing', 'screening'].includes(application.status)) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Application can no longer be edited at this stage',
+                });
+            }
+
+            const payload = {
+                updated_at: db.fn.now(),
+            };
+            if (typeof cover_letter === 'string') payload.cover_letter = cover_letter;
+            if (screening_answers && typeof screening_answers === 'object') {
+                payload.screening_answers = JSON.stringify(screening_answers);
+            }
+
+            const [updated] = await db('applications').where('id', id).update(payload).returning('*');
+            await ApplicationController.recalculateApplicationScores(id);
+            const recipients = await db('users')
+                .whereIn('role', ['recruiter', 'admin'])
+                .where('is_active', true)
+                .select('id');
+            for (const recipient of recipients) {
+                await NotificationService.create({
+                    userId: recipient.id,
+                    type: 'application_updated',
+                    title: 'Candidature mise à jour',
+                    message: 'Un candidat a modifié sa candidature.',
+                    data: { application_id: id },
+                    priority: 'medium',
+                    channel: 'in_app',
+                });
+            }
+
+            await auditLog({
+                action: 'candidate_update_application',
+                entity_type: 'application',
+                entity_id: id,
+                user_id: req.user.id,
+                ip_address: req.ip,
+                user_agent: req.get('User-Agent'),
+            });
+
+            res.json({ success: true, data: updated, message: 'Application updated successfully' });
+        } catch (error) {
+            console.error('Update own application error:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    }
+
+    static async uploadApplicationDocument(req, res) {
+        try {
+            const { id } = req.params;
+            const file = req.file;
+            const candidate = await db('candidates').where('user_id', req.user.id).first();
+            if (!candidate) return res.status(404).json({ success: false, error: 'Candidate profile not found' });
+            if (!file) return res.status(400).json({ success: false, error: 'No file uploaded' });
+
+            const application = await db('applications').where({ id, candidate_id: candidate.id }).first();
+            if (!application) return res.status(404).json({ success: false, error: 'Application not found' });
+
+            const uploadDir = path.resolve(process.cwd(), 'uploads', 'application-documents');
+            await fs.mkdir(uploadDir, { recursive: true });
+            const ext = path.extname(file.originalname || '').toLowerCase() || '.bin';
+            const filename = `${crypto.randomUUID()}${ext}`;
+            const fullPath = path.join(uploadDir, filename);
+            await fs.writeFile(fullPath, file.buffer);
+
+            const fileHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
+            const publicPath = `/uploads/application-documents/${filename}`;
+            const scan_data = await ApplicationController.scanDocument(file);
+
+            const [doc] = await db('application_documents')
+                .insert({
+                    application_id: application.id,
+                    candidate_id: candidate.id,
+                    file_path: publicPath,
+                    original_name: file.originalname,
+                    mime_type: file.mimetype,
+                    file_size: file.size,
+                    file_hash: fileHash,
+                    scan_data: JSON.stringify(scan_data),
+                })
+                .returning('*');
+            await ApplicationController.recalculateApplicationScores(application.id);
+            await ApplicationController.logApplicationEvent({
+                applicationId: application.id,
+                userId: req.user.id,
+                action: 'application_document_uploaded',
+                details: { document_id: doc.id, file_name: file.originalname },
+            });
+            const recipients = await db('users')
+                .whereIn('role', ['recruiter', 'admin'])
+                .where('is_active', true)
+                .select('id');
+            for (const recipient of recipients) {
+                await NotificationService.create({
+                    userId: recipient.id,
+                    type: 'application_document',
+                    title: 'Nouveau document candidat',
+                    message: `${file.originalname} a été ajouté à une candidature.`,
+                    data: { application_id: application.id, document_id: doc.id },
+                    priority: 'medium',
+                    channel: 'in_app',
+                });
+            }
+
+            await auditLog({
+                action: 'upload_application_document',
+                entity_type: 'application',
+                entity_id: id,
+                user_id: req.user.id,
+                ip_address: req.ip,
+                user_agent: req.get('User-Agent'),
+            });
+
+            res.status(201).json({
+                success: true,
+                data: {
+                    id: doc.id,
+                    file_path: doc.file_path,
+                    original_name: doc.original_name,
+                    mime_type: doc.mime_type,
+                    file_size: doc.file_size,
+                    scan_data: typeof doc.scan_data === 'string' ? JSON.parse(doc.scan_data) : (doc.scan_data || {}),
+                    created_at: doc.created_at,
+                },
+            });
+        } catch (error) {
+            console.error('Upload application document error:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    }
+
+    static async getApplicationDocuments(req, res) {
+        try {
+            const { id } = req.params;
+            const application = await db('applications').where('id', id).first();
+            if (!application) return res.status(404).json({ success: false, error: 'Application not found' });
+
+            if (req.user.role === 'candidate') {
+                const candidate = await db('candidates').where('user_id', req.user.id).first();
+                if (!candidate || candidate.id !== application.candidate_id) {
+                    return res.status(403).json({ success: false, error: 'Forbidden' });
+                }
+            }
+
+            const documents = await ApplicationController.listDocumentsForApplication(id);
+            res.json({ success: true, data: documents });
+        } catch (error) {
+            console.error('Get application documents error:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    }
+
+    static async deleteApplicationDocument(req, res) {
+        try {
+            const { id, documentId } = req.params;
+            const candidate = await db('candidates').where('user_id', req.user.id).first();
+            if (!candidate) return res.status(404).json({ success: false, error: 'Candidate profile not found' });
+
+            const application = await db('applications').where({ id, candidate_id: candidate.id }).first();
+            if (!application) return res.status(404).json({ success: false, error: 'Application not found' });
+
+            const doc = await db('application_documents').where({ id: documentId, application_id: id, candidate_id: candidate.id }).first();
+            if (!doc) return res.status(404).json({ success: false, error: 'Document not found' });
+
+            const absolute = path.resolve(process.cwd(), doc.file_path.replace(/^\//, ''));
+            await fs.unlink(absolute).catch(() => {});
+            await db('application_documents').where('id', documentId).del();
+            await ApplicationController.recalculateApplicationScores(id);
+            await ApplicationController.logApplicationEvent({
+                applicationId: id,
+                userId: req.user.id,
+                action: 'application_document_deleted',
+                details: { document_id: documentId },
+            });
+            const recipients = await db('users')
+                .whereIn('role', ['recruiter', 'admin'])
+                .where('is_active', true)
+                .select('id');
+            for (const recipient of recipients) {
+                await NotificationService.create({
+                    userId: recipient.id,
+                    type: 'application_document',
+                    title: 'Document candidature supprimé',
+                    message: 'Un document a été retiré d’une candidature.',
+                    data: { application_id: id, document_id: documentId },
+                    priority: 'low',
+                    channel: 'in_app',
+                });
+            }
+
+            res.json({ success: true, message: 'Document deleted successfully' });
+        } catch (error) {
+            console.error('Delete application document error:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    }
+
+    static async listDocumentsForApplication(applicationId) {
+        const docs = await db('application_documents')
+            .where('application_id', applicationId)
+            .orderBy('created_at', 'desc');
+        return docs.map((doc) => ({
+            id: doc.id,
+            file_path: doc.file_path,
+            original_name: doc.original_name,
+            mime_type: doc.mime_type,
+            file_size: doc.file_size,
+            scan_data: typeof doc.scan_data === 'string' ? JSON.parse(doc.scan_data) : (doc.scan_data || {}),
+            created_at: doc.created_at,
+        }));
+    }
+
+    static async scanDocument(file) {
+        if (file.mimetype === 'application/pdf') {
+            const parsed = await pdf(file.buffer);
+            return {
+                type: 'pdf',
+                pages: parsed.numpages || 0,
+                text_preview: (parsed.text || '').slice(0, 500),
+                scanned_at: new Date().toISOString(),
+            };
+        }
+        if (file.mimetype.startsWith('image/')) {
+            const metadata = await sharp(file.buffer).metadata();
+            return {
+                type: 'image',
+                format: metadata.format || null,
+                width: metadata.width || null,
+                height: metadata.height || null,
+                scanned_at: new Date().toISOString(),
+            };
+        }
+        return { type: 'unknown', scanned_at: new Date().toISOString() };
+    }
+
+    static async updateRecruiterScore(req, res) {
+        try {
+            const { id } = req.params;
+            const { recruiter_score, comment } = req.body;
+            const application = await db('applications').where('id', id).first();
+            if (!application) return res.status(404).json({ success: false, error: 'Application not found' });
+
+            const normalizedRecruiterScore = ApplicationController.normalizeScore(recruiter_score);
+            const finalScore = ApplicationController.computeFinalScore(application.ai_score, normalizedRecruiterScore);
+            const currentMetadata = typeof application.metadata === 'string'
+                ? JSON.parse(application.metadata || '{}')
+                : (application.metadata || {});
+
+            const [updated] = await db('applications')
+                .where('id', id)
+                .update({
+                    recruiter_score: normalizedRecruiterScore,
+                    metadata: JSON.stringify({
+                        ...currentMetadata,
+                        final_score: finalScore,
+                    }),
+                    updated_at: db.fn.now(),
+                })
+                .returning('*');
+
+            await ApplicationController.logApplicationEvent({
+                applicationId: id,
+                userId: req.user.id,
+                action: 'application_recruiter_score_updated',
+                details: {
+                    old_recruiter_score: application.recruiter_score,
+                    new_recruiter_score: normalizedRecruiterScore,
+                    final_score: finalScore,
+                    comment: comment || null,
+                },
+            });
+
+            const candidateUser = await db('candidates')
+                .join('users', 'candidates.user_id', 'users.id')
+                .where('candidates.id', application.candidate_id)
+                .select('users.id as user_id')
+                .first();
+            if (candidateUser) {
+                await NotificationService.create({
+                    userId: candidateUser.user_id,
+                    type: 'application_score',
+                    title: 'Votre candidature a été évaluée',
+                    message: `Votre candidature a reçu une nouvelle évaluation (score final: ${finalScore ?? '-'})`,
+                    data: { application_id: id, recruiter_score: normalizedRecruiterScore, final_score: finalScore },
+                    priority: 'medium',
+                    channel: 'in_app',
+                });
+            }
+
+            res.json({
+                success: true,
+                data: {
+                    ...updated,
+                    final_score: finalScore,
+                },
+                message: 'Recruiter score updated successfully',
+            });
+        } catch (error) {
+            console.error('Update recruiter score error:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    }
+
+    static async addRecruiterNote(req, res) {
+        try {
+            const { id } = req.params;
+            const { note } = req.body;
+            const application = await db('applications').where('id', id).first();
+            if (!application) return res.status(404).json({ success: false, error: 'Application not found' });
+
+            const existingNotes = Array.isArray(application.notes)
+                ? application.notes
+                : (typeof application.notes === 'string' ? JSON.parse(application.notes || '[]') : []);
+            const noteEntry = {
+                id: crypto.randomUUID(),
+                note,
+                author_id: req.user.id,
+                created_at: new Date().toISOString(),
+            };
+            const notes = [noteEntry, ...existingNotes];
+
+            const [updated] = await db('applications')
+                .where('id', id)
+                .update({
+                    notes: JSON.stringify(notes),
+                    updated_at: db.fn.now(),
+                })
+                .returning('*');
+
+            await ApplicationController.logApplicationEvent({
+                applicationId: id,
+                userId: req.user.id,
+                action: 'application_note_added',
+                details: { note_id: noteEntry.id },
+            });
+
+            const candidateUser = await db('candidates')
+                .join('users', 'candidates.user_id', 'users.id')
+                .where('candidates.id', application.candidate_id)
+                .select('users.id as user_id')
+                .first();
+            if (candidateUser) {
+                await NotificationService.create({
+                    userId: candidateUser.user_id,
+                    type: 'application_note',
+                    title: 'Mise à jour de votre dossier',
+                    message: 'Votre dossier de candidature a reçu une nouvelle mise à jour.',
+                    data: { application_id: id },
+                    priority: 'low',
+                    channel: 'in_app',
+                });
+            }
+
+            res.status(201).json({ success: true, data: updated, message: 'Note added successfully' });
+        } catch (error) {
+            console.error('Add recruiter note error:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
+        }
+    }
+
+    static async getApplicationTimeline(req, res) {
+        try {
+            const { id } = req.params;
+            const application = await db('applications').where('id', id).first();
+            if (!application) return res.status(404).json({ success: false, error: 'Application not found' });
+
+            if (req.user.role === 'candidate') {
+                const candidate = await db('candidates').where('user_id', req.user.id).first();
+                if (!candidate || candidate.id !== application.candidate_id) {
+                    return res.status(403).json({ success: false, error: 'Forbidden' });
+                }
+            }
+
+            const timeline = await db('audit_trail')
+                .where({ entity_type: 'application', entity_id: id })
+                .orderBy('created_at', 'desc')
+                .select('id', 'action', 'new_values', 'created_at', 'user_id');
+
+            res.json({ success: true, data: timeline });
+        } catch (error) {
+            console.error('Get application timeline error:', error);
+            res.status(500).json({ success: false, error: 'Internal server error' });
         }
     }
 }

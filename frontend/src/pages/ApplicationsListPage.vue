@@ -51,6 +51,7 @@
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Candidat</th>
             <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Statut</th>
+            <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Scores</th>
             <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Recruteur</th>
             <th class="px-6 py-3 text-left text-xs font-medium uppercase text-slate-500">Date</th>
             <th class="px-6 py-3 text-right text-xs font-medium uppercase text-slate-500">Actions</th>
@@ -71,6 +72,11 @@
             </td>
             <td class="px-6 py-4">
               <span :class="getStatusClass(app.status)">{{ getStatusLabel(app.status) }}</span>
+            </td>
+            <td class="px-6 py-4 text-xs">
+              <div class="text-brand-600">IA: {{ app.ai_score ?? '-' }}</div>
+              <div class="text-emerald-600">Recruteur: {{ app.recruiter_score ?? '-' }}</div>
+              <div class="text-violet-600 font-semibold">Final: {{ app.final_score ?? computeFinalScore(app.ai_score, app.recruiter_score) ?? '-' }}</div>
             </td>
             <td class="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
               {{ app.recruiter_first_name ? `${app.recruiter_first_name} ${app.recruiter_last_name || ''}`.trim() : '-' }}
@@ -174,5 +180,14 @@ const getStatusLabel = (status) => ({
 }[status] || status)
 
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('fr-FR') : '-'
+
+const computeFinalScore = (aiScore, recruiterScore) => {
+  const ai = Number(aiScore)
+  const recruiter = Number(recruiterScore)
+  if (Number.isNaN(ai) && Number.isNaN(recruiter)) return null
+  if (Number.isNaN(ai)) return recruiter
+  if (Number.isNaN(recruiter)) return ai
+  return Math.round(((ai + recruiter) / 2) * 100) / 100
+}
 
 </script>

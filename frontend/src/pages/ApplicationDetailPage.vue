@@ -10,7 +10,7 @@
       <!-- Main Info -->
       <div class="lg:col-span-2 space-y-6">
         <!-- Candidate Card -->
-        <div class="card-elevated p-6">
+        <div v-if="!isCandidate" class="card-elevated p-6">
           <div class="flex items-start gap-4">
             <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-600 flex items-center justify-center text-2xl font-bold text-white">
               {{ application.candidate?.first_name?.[0] }}{{ application.candidate?.last_name?.[0] }}
@@ -21,8 +21,10 @@
               </h1>
               <p class="text-slate-600 dark:text-slate-400">{{ application.candidate?.email }}</p>
               <div class="mt-3 flex gap-2">
-                <a :href="`mailto:${application.candidate?.email}`" class="btn-secondary text-sm">Contacter</a>
-                <router-link v-if="application.candidate?.id" :to="`/candidates/${application.candidate.id}`" class="btn-secondary text-sm">Voir profil</router-link>
+                <template v-if="!isCandidate">
+                  <a :href="`mailto:${application.candidate?.email}`" class="btn-secondary text-sm">Contacter</a>
+                  <router-link v-if="application.candidate?.id" :to="`/candidates/${application.candidate.id}`" class="btn-secondary text-sm">Voir profil</router-link>
+                </template>
               </div>
             </div>
             <div class="text-right">
@@ -33,10 +35,10 @@
         </div>
 
         <!-- Pipeline -->
-        <ApplicationPipeline :current-status="application.status" @update-status="updateStatus" />
+        <ApplicationPipeline v-if="!isCandidate" :current-status="application.status" @update-status="updateStatus" />
 
         <!-- Job Details -->
-        <div class="card-elevated p-6">
+        <div v-if="!isCandidate" class="card-elevated p-6">
           <h2 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Offre concernée</h2>
           <div class="flex items-center justify-between">
             <div>
@@ -47,12 +49,29 @@
           </div>
         </div>
 
+        <div v-else class="card-elevated p-6 space-y-3">
+          <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Modifier ma candidature</h2>
+          <label class="text-sm text-slate-600 dark:text-slate-300">Lettre de motivation</label>
+          <textarea v-model="editableCoverLetter" rows="5" class="input-field" />
+          <label class="text-sm text-slate-600 dark:text-slate-300">Réponses screening (JSON)</label>
+          <textarea v-model="editableScreeningAnswers" rows="5" class="input-field font-mono text-xs" />
+          <div class="flex justify-end">
+            <button class="btn-primary text-sm" @click="saveMyApplicationEdits">Enregistrer mes modifications</button>
+          </div>
+        </div>
+
         <!-- Notes -->
         <div class="card-elevated p-6">
           <h2 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Notes & Évaluation</h2>
-          <textarea v-model="notes" rows="4" class="input-field" placeholder="Ajouter des notes sur ce candidat..."></textarea>
-          <div class="mt-4 flex justify-end">
+          <textarea v-if="!isCandidate" v-model="notes" rows="4" class="input-field" placeholder="Ajouter des notes sur ce candidat..."></textarea>
+          <div v-if="!isCandidate" class="mt-4 flex justify-end">
             <button class="btn-secondary text-sm" @click="saveNotes">Enregistrer les notes</button>
+          </div>
+          <div v-if="noteItems.length" class="mt-4 space-y-2 text-xs">
+            <div v-for="n in noteItems" :key="n.id || n.created_at" class="rounded border border-slate-200 p-2">
+              <p class="text-slate-800 dark:text-slate-100">{{ n.note || n.text || '-' }}</p>
+              <p class="text-slate-500">{{ formatDateTime(n.created_at) }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -61,6 +80,21 @@
       <div class="space-y-6">
         <!-- Assignment -->
         <div class="card-elevated p-4">
+          <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Scores</h3>
+          <div class="space-y-1 text-sm">
+            <div>Score IA: <span class="font-semibold text-brand-600">{{ application.ai_score ?? '-' }}</span></div>
+            <div>Score recruteur: <span class="font-semibold text-emerald-600">{{ application.recruiter_score ?? '-' }}</span></div>
+            <div>Score final: <span class="font-semibold text-violet-600">{{ application.final_score ?? computeFinalScore(application.ai_score, application.recruiter_score) ?? '-' }}</span></div>
+          </div>
+          <div v-if="!isCandidate" class="mt-3 space-y-2">
+            <input v-model.number="editableRecruiterScore" type="number" min="0" max="100" class="input-field text-sm" placeholder="Note recruteur (0-100)">
+            <input v-model="scoreComment" type="text" class="input-field text-sm" placeholder="Commentaire optionnel">
+            <button class="btn-secondary text-sm" @click="saveRecruiterScore">Enregistrer la note</button>
+          </div>
+        </div>
+
+        <!-- Assignment -->
+        <div v-if="!isCandidate" class="card-elevated p-4">
           <h3 class="font-semibold text-slate-900 dark:text-white mb-3"> Assigné à</h3>
           <select v-model="application.recruiter_id" class="input-field text-sm" @change="assignRecruiter">
             <option :value="null">Non </option>
@@ -71,11 +105,21 @@
         <!-- Documents -->
         <div class="card-elevated p-4">
           <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Documents</h3>
+          <div v-if="isCandidate" class="mb-3">
+            <input ref="documentInput" type="file" accept=".pdf,image/png,image/jpeg,image/webp" class="hidden" @change="uploadDocument">
+            <button class="btn-secondary text-sm" @click="documentInput?.click()">Ajouter un document</button>
+          </div>
           <div v-if="application.cv_url" class="space-y-2">
             <a :href="application.cv_url" target="_blank" class="flex items-center gap-2 text-sm text-brand-600 hover:underline dark:text-brand-400">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
               CV (PDF)
             </a>
+          </div>
+          <div v-if="documents.length" class="mt-3 space-y-2">
+            <div v-for="doc in documents" :key="doc.id" class="flex items-center justify-between rounded border border-slate-200 p-2 text-xs">
+              <a :href="doc.file_path" target="_blank" class="text-brand-600 hover:underline">{{ doc.original_name }}</a>
+              <button v-if="isCandidate" class="text-rose-600" @click="deleteDocument(doc.id)">Supprimer</button>
+            </div>
           </div>
           <p v-else class="text-sm text-slate-500">Aucun document</p>
         </div>
@@ -103,18 +147,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useApplicationsStore } from '@/stores/applications'
 import { useUserStore } from '@/stores/user'
+import { useAuthStore } from '@/stores/auth'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 import ApplicationPipeline from '@/components/core/ApplicationPipeline.vue'
+import { useNotifications } from '@/composables/useNotifications'
 
 const route = useRoute()
 const router = useRouter()
 const applicationsStore = useApplicationsStore()
 const userStore = useUserStore()
+const authStore = useAuthStore()
+const { success: showSuccess, error: showError } = useNotifications()
 
 const goBackSafely = () => {
   if (window.history.length > 1) {
@@ -129,15 +177,34 @@ const { users: recruiters } = storeToRefs(userStore)
 
 const notes = ref('')
 const timeline = ref([])
+const noteItems = ref([])
+const documents = ref([])
+const documentInput = ref(null)
+const editableCoverLetter = ref('')
+const editableScreeningAnswers = ref('{}')
+const editableRecruiterScore = ref(null)
+const scoreComment = ref('')
+const isCandidate = computed(() => authStore.user?.role === 'candidate')
 
 const loadApplication = async () => {
   await applicationsStore.fetchApplication(route.params.id)
-  await userStore.fetchUsers()
-  // Timeline will be loaded from API when available
-  timeline.value = [
-    { action: 'Candidature reçue', created_at: application.value?.created_at },
-  ]
-  notes.value = application.value?.notes || ''
+  if (!isCandidate.value) await userStore.fetchUsers()
+  const docsResult = await applicationsStore.fetchApplicationDocuments(route.params.id)
+  documents.value = docsResult.documents || []
+  const timelineResult = await applicationsStore.fetchTimeline(route.params.id)
+  timeline.value = timelineResult.success
+    ? timelineResult.timeline.map((event) => ({
+      action: formatTimelineAction(event.action, event.new_values),
+      created_at: event.created_at
+    }))
+    : [{ action: 'Candidature reçue', created_at: application.value?.created_at }]
+  noteItems.value = Array.isArray(application.value?.notes)
+    ? application.value.notes
+    : (typeof application.value?.notes === 'string' ? JSON.parse(application.value.notes || '[]') : [])
+  notes.value = ''
+  editableCoverLetter.value = application.value?.cover_letter || ''
+  editableScreeningAnswers.value = JSON.stringify(application.value?.screening_answers || {}, null, 2)
+  editableRecruiterScore.value = application.value?.recruiter_score ?? null
 }
 
 const updateStatus = async (newStatus) => {
@@ -152,7 +219,87 @@ const assignRecruiter = async () => {
 }
 
 const saveNotes = async () => {
-  await applicationsStore.addNote(route.params.id, notes.value)
+  const result = await applicationsStore.addNote(route.params.id, notes.value)
+  if (result.success) {
+    showSuccess('Note enregistrée')
+    await loadApplication()
+  } else {
+    showError(result.error || 'Impossible d’enregistrer la note')
+  }
+}
+
+const saveRecruiterScore = async () => {
+  const result = await applicationsStore.updateRecruiterScore(route.params.id, editableRecruiterScore.value, scoreComment.value)
+  if (result.success) {
+    showSuccess('Score recruteur mis à jour')
+    scoreComment.value = ''
+    await loadApplication()
+  } else {
+    showError(result.error || 'Impossible de mettre à jour le score')
+  }
+}
+
+const saveMyApplicationEdits = async () => {
+  let parsed = {}
+  try {
+    parsed = editableScreeningAnswers.value ? JSON.parse(editableScreeningAnswers.value) : {}
+  } catch (e) {
+    showError('Le JSON des réponses screening est invalide')
+    return
+  }
+  const result = await applicationsStore.updateOwnApplication(route.params.id, {
+    cover_letter: editableCoverLetter.value,
+    screening_answers: parsed
+  })
+  if (result.success) showSuccess('Candidature mise à jour')
+  else showError(result.error || 'Échec de mise à jour')
+}
+
+const uploadDocument = async (event) => {
+  const file = event.target.files?.[0]
+  if (!file) return
+  const result = await applicationsStore.uploadApplicationDocument(route.params.id, file)
+  if (result.success) {
+    documents.value.unshift(result.document)
+    showSuccess('Document ajouté')
+  } else {
+    showError(result.error || 'Upload impossible')
+  }
+  if (documentInput.value) documentInput.value.value = ''
+}
+
+const deleteDocument = async (documentId) => {
+  const result = await applicationsStore.deleteApplicationDocument(route.params.id, documentId)
+  if (result.success) {
+    documents.value = documents.value.filter(d => d.id !== documentId)
+    showSuccess('Document supprimé')
+  } else {
+    showError(result.error || 'Suppression impossible')
+  }
+}
+
+const computeFinalScore = (aiScore, recruiterScore) => {
+  const ai = Number(aiScore)
+  const recruiter = Number(recruiterScore)
+  if (Number.isNaN(ai) && Number.isNaN(recruiter)) return null
+  if (Number.isNaN(ai)) return recruiter
+  if (Number.isNaN(recruiter)) return ai
+  return Math.round(((ai + recruiter) / 2) * 100) / 100
+}
+
+const formatTimelineAction = (action, payload) => {
+  const values = typeof payload === 'string'
+    ? (() => { try { return JSON.parse(payload) } catch { return {} } })()
+    : (payload || {})
+  const labels = {
+    application_status_updated: `Niveau changé: ${values.new_status || '-'}`,
+    application_status_drag_drop: `Niveau changé: ${values.new_status || '-'}`,
+    application_recruiter_score_updated: `Note recruteur: ${values.new_recruiter_score ?? '-'}`,
+    application_note_added: 'Note ajoutée',
+    application_document_uploaded: `Document ajouté: ${values.file_name || ''}`,
+    application_document_deleted: 'Document supprimé'
+  }
+  return labels[action] || action
 }
 
 const getStatusClass = (status) => {

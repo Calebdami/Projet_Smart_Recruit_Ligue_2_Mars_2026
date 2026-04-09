@@ -1,6 +1,20 @@
 import api from '@/config/api'
 
 class CandidatesService {
+  async getMyProfile() {
+    const response = await api.get('/candidates/profile')
+    return response.data
+  }
+
+  async uploadMyResume(file) {
+    const formData = new FormData()
+    formData.append('resume', file)
+    const response = await api.post('/candidates/upload-resume', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    })
+    return response.data
+  }
+
   async getCandidates(params = {}) {
     const response = await api.get('/candidates', { params })
     return response.data

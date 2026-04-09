@@ -12,10 +12,11 @@ const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
   fileFilter: (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
+    const allowed = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+    if (allowed.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error('Only PDF files are allowed'), false);
+      cb(new Error('Only PDF/PNG/JPG/WEBP files are allowed'), false);
     }
   }
 });
@@ -57,6 +58,13 @@ router.post('/upload-resume',
   CandidateController.uploadResume
 );
 
+router.post('/:id/cv',
+  authenticate,
+  authorize(['candidate']),
+  upload.single('cv'),
+  CandidateController.uploadResumeById
+);
+
 // Recruiter access to candidates
 router.get('/',
   authenticate,
@@ -72,13 +80,19 @@ router.get('/:id',
 
 router.get('/:id/cv',
   authenticate,
-  authorize(['recruiter', 'admin']),
+  authorize(['candidate', 'recruiter', 'admin']),
   CandidateController.getCandidateCV
 );
 
 router.post('/:id/parse-cv',
   authenticate,
   authorize(['recruiter', 'admin']),
+  CandidateController.parseCV
+);
+
+router.post('/:id/cv/parse',
+  authenticate,
+  authorize(['candidate', 'recruiter', 'admin']),
   CandidateController.parseCV
 );
 
