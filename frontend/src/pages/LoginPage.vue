@@ -158,16 +158,25 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUI } from '@/composables/useUI'
 import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
+const route = useRoute()
 const authStore = useAuthStore()
 const { notify } = useUI()
 const { login: authLogin } = useAuth()
+
+const redirectPath = ref('/home')
+
+onMounted(() => {
+  if (route.query.redirect) {
+    redirectPath.value = decodeURIComponent(route.query.redirect)
+  }
+})
 
 const showPassword = ref(false)
 const loading = ref(false)
@@ -201,7 +210,7 @@ const handleLogin = async () => {
       if (!result.success) throw new Error(result.error || 'Échec de la connexion')
     }
 
-    setTimeout(() => router.push('/'), 600)
+    setTimeout(() => router.push(redirectPath.value), 600)
   } catch (error) {
     // useAuth() already displays the login error toast
   } finally {

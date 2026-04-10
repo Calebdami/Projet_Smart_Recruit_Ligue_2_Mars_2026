@@ -8,6 +8,12 @@ export const useJobsStore = defineStore('jobs', () => {
   const currentJob = ref(null)
   const loading = ref(false)
   const error = ref(null)
+  const pagination = ref({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0
+  })
   const filters = ref({
     search: '',
     status: '',
@@ -28,8 +34,13 @@ export const useJobsStore = defineStore('jobs', () => {
     error.value = null
     try {
       const response = await jobsService.getJobs({ ...filters.value, ...params })
-      jobs.value = response.data?.jobs || response.data || []
-      return { success: true, jobs: jobs.value }
+      const responseData = response.data || {}
+      jobs.value = responseData.jobs || responseData || []
+      // Extract pagination if available
+      if (responseData.pagination) {
+        pagination.value = responseData.pagination
+      }
+      return { success: true, jobs: jobs.value, pagination: pagination.value }
     } catch (err) {
       error.value = err.response?.data?.message || err.message || 'Failed to fetch jobs'
       return { success: false, error: error.value }
@@ -144,6 +155,7 @@ export const useJobsStore = defineStore('jobs', () => {
     currentJob,
     loading,
     error,
+    pagination,
     filters,
     // Getters
     allJobs,

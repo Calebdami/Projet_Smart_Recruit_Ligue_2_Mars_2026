@@ -39,7 +39,7 @@
           <tbody class="divide-y divide-slate-200 dark:divide-slate-700/50">
             <tr v-for="app in applications" :key="app.id" class="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/25">
               <td class="px-6 py-4 font-medium text-slate-900 dark:text-white">
-                <router-link :to="`/jobs/${app.job_id}`" class="hover:text-brand-600 hover:underline">
+                <router-link :to="`/jobs-internal/${app.job_id}`" class="hover:text-brand-600 hover:underline">
                   {{ app.job_title || 'Poste inconnu' }}
                 </router-link>
               </td>

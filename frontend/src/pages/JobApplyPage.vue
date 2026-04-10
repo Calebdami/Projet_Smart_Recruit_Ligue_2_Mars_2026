@@ -99,7 +99,7 @@ const submitting = ref(false)
 const scanResults = ref([])
 
 const goBackSafely = () => {
-  router.push(`/jobs/${route.params.id}`)
+  router.push(`/jobs-internal/${route.params.id}`)
 }
 
 const onResumeChange = (event) => {

@@ -83,7 +83,7 @@
               <p class="font-medium text-slate-900 dark:text-white">{{ application.job?.title }}</p>
               <p class="text-sm text-slate-600 dark:text-slate-400">{{ application.job?.department }} • {{ application.job?.location }}</p>
             </div>
-            <router-link :to="`/jobs/${application.job?.id}`" class="text-sm text-brand-600 hover:underline dark:text-brand-400">Voir l'offre →</router-link>
+            <router-link :to="`/jobs-internal/${application.job?.id}`" class="text-sm text-brand-600 hover:underline dark:text-brand-400">Voir l'offre →</router-link>
           </div>
         </div>
 
@@ -95,7 +95,7 @@
               <p class="font-medium text-slate-900 dark:text-white">{{ application.job?.title }}</p>
               <p class="text-sm text-slate-600 dark:text-slate-400">{{ application.job?.department }} • {{ application.job?.location }}</p>
             </div>
-            <router-link :to="`/jobs/${application.job?.id}`" class="text-sm text-brand-600 hover:underline dark:text-brand-400">Voir l'offre →</router-link>
+            <router-link :to="`/jobs-internal/${application.job?.id}`" class="text-sm text-brand-600 hover:underline dark:text-brand-400">Voir l'offre →</router-link>
           </div>
         </div>
 

@@ -84,7 +84,7 @@ const goBackSafely = () => {
   if (window.history.length > 1) {
     router.back()
   } else {
-    router.push(`/jobs/${route.params.id}`)
+    router.push(`/jobs-internal/${route.params.id}`)
   }
 }
 
@@ -144,7 +144,7 @@ const handleSubmit = async () => {
 
     const result = await jobsStore.updateJob(route.params.id, payload)
     if (result.success) {
-      router.push(`/jobs/${route.params.id}`)
+      router.push(`/jobs-internal/${route.params.id}`)
     }
   } finally {
     isSubmitting.value = false

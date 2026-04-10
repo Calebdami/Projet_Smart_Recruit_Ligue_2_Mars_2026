@@ -65,7 +65,7 @@
             </div>
           </div>
           <div class="ml-4 flex items-center gap-2">
-            <router-link :to="`/jobs/${job.id}`" class="btn-secondary text-sm">Voir</router-link>
+            <router-link :to="`/jobs-internal/${job.id}`" class="btn-secondary text-sm">Voir</router-link>
             <router-link
               v-if="isCandidate && $can('create_applications') && isJobOpenForApplications(job.status) && !job.has_applied"
               :to="`/jobs/${job.id}/apply`"

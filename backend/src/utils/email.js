@@ -3,7 +3,7 @@ import { config } from '../config/index.js';
 
 // Create transporter
 const createTransporter = () => {
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: config.email.host,
     port: config.email.port,
     secure: config.email.secure,

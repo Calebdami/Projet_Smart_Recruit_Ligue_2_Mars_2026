@@ -4,7 +4,7 @@
       <div class="flex items-center gap-4">
         <router-link 
           v-if="filters.job_id && selectedJob" 
-          :to="`/jobs/${filters.job_id}`" 
+          :to="`/jobs-internal/${filters.job_id}`" 
           class="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
         >
           ← Retour à l'offre

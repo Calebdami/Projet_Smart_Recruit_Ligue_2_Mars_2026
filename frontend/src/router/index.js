@@ -2,12 +2,56 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 
 const routes = [
+  // Public routes - Landing & Discovery
   {
     path: '/',
-    name: 'Home',
-    component: () => import('@/views/Home.vue'),
-    meta: { requiresAuth: true, layout: 'MainLayout' }
+    name: 'Landing',
+    component: () => import('@/pages/LandingPage.vue'),
+    meta: { layout: 'PublicLayout' }
   },
+  {
+    path: '/about',
+    name: 'About',
+    component: () => import('@/pages/AboutPage.vue'),
+    meta: { layout: 'PublicLayout' }
+  },
+  {
+    path: '/contact',
+    name: 'Contact',
+    component: () => import('@/pages/ContactPage.vue'),
+    meta: { layout: 'PublicLayout' }
+  },
+  {
+    path: '/terms',
+    name: 'Terms',
+    component: () => import('@/pages/TermsPage.vue'),
+    meta: { layout: 'PublicLayout' }
+  },
+  {
+    path: '/privacy',
+    name: 'Privacy',
+    component: () => import('@/pages/PrivacyPage.vue'),
+    meta: { layout: 'PublicLayout' }
+  },
+  {
+    path: '/help',
+    name: 'Help',
+    component: () => import('@/pages/HelpPage.vue'),
+    meta: { layout: 'PublicLayout' }
+  },
+  {
+    path: '/jobs-public',
+    name: 'JobsPublic',
+    component: () => import('@/pages/JobsPublicPage.vue'),
+    meta: { layout: 'PublicLayout' }
+  },
+  {
+    path: '/jobs/:id',
+    name: 'JobDetailPublic',
+    component: () => import('@/pages/JobDetailPage.vue'),
+    meta: { layout: 'PublicLayout' }
+  },
+  // Auth routes
   {
     path: '/login',
     name: 'Login',
@@ -19,6 +63,13 @@ const routes = [
     name: 'Register',
     component: () => import('@/pages/RegisterPage.vue'),
     meta: { guest: true, layout: 'AuthLayout' }
+  },
+  // Authenticated routes
+  {
+    path: '/home',
+    name: 'Home',
+    component: () => import('@/views/Home.vue'),
+    meta: { requiresAuth: true, layout: 'MainLayout' }
   },
   {
     path: '/profile',
@@ -57,18 +108,6 @@ const routes = [
     meta: { requiresAuth: true, requiresRole: 'admin', layout: 'MainLayout' }
   },
   {
-    path: '/terms',
-    name: 'Terms',
-    component: () => import('@/pages/TermsPage.vue'),
-    meta: { layout: 'DefaultLayout' }
-  },
-  {
-    path: '/privacy',
-    name: 'Privacy',
-    component: () => import('@/pages/PrivacyPage.vue'),
-    meta: { layout: 'DefaultLayout' }
-  },
-  {
     path: '/jobs',
     name: 'Jobs',
     component: () => import('@/pages/JobsListPage.vue'),
@@ -81,8 +120,8 @@ const routes = [
     meta: { requiresAuth: true, requiresRole: 'admin', layout: 'MainLayout' }
   },
   {
-    path: '/jobs/:id',
-    name: 'JobDetail',
+    path: '/jobs-internal/:id',
+    name: 'JobDetailInternal',
     component: () => import('@/pages/JobDetailPage.vue'),
     meta: { requiresAuth: true, layout: 'MainLayout' }
   },
@@ -171,24 +210,6 @@ const routes = [
     meta: { requiresAuth: true, layout: 'MainLayout' }
   },
   {
-    path: '/about',
-    name: 'About',
-    component: () => import('@/pages/AboutPage.vue'),
-    meta: { layout: 'DefaultLayout' }
-  },
-  {
-    path: '/contact',
-    name: 'Contact',
-    component: () => import('@/pages/ContactPage.vue'),
-    meta: { layout: 'DefaultLayout' }
-  },
-  {
-    path: '/help',
-    name: 'Help',
-    component: () => import('@/pages/HelpPage.vue'),
-    meta: { layout: 'DefaultLayout' }
-  },
-  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('@/pages/NotFoundPage.vue'),
@@ -224,7 +245,7 @@ router.beforeEach((to, from, next) => {
 
   // Redirect authenticated users away from guest routes
   if (to.meta.guest && isAuthenticated) {
-    next('/')
+    next('/home')
     return
   }
 

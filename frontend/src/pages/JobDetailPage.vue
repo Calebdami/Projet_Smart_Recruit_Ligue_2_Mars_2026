@@ -66,10 +66,15 @@
             <router-link :to="`/applications?job_id=${job.id}`" class="mt-2 text-sm text-brand-600 hover:underline dark:text-brand-400">Voir les candidatures →</router-link>
           </div>
           
-          <div v-if="!$can('review_applications') && ['published', 'open'].includes(job.status)" class="rounded-xl border border-brand-100 bg-white p-4 shadow-sm dark:border-brand-900/50 dark:bg-black">
-            <template v-if="!job.has_applied">
+          <div v-if="!isRecruiter && ['published', 'open'].includes(job.status)" class="rounded-xl border border-brand-100 bg-white p-4 shadow-sm dark:border-brand-900/50 dark:bg-black">
+            <template v-if="!isAuthenticated">
               <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Êtes-vous intéressé(e) ?</h3>
-              <router-link :to="`/jobs/${job.id}/apply`" class="btn-primary w-full shadow-md justify-center">Postuler maintenant</router-link>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">Connectez-vous pour postuler à cette offre.</p>
+              <button @click="handleApply" class="btn-primary w-full shadow-md justify-center">Se connecter pour postuler</button>
+            </template>
+            <template v-else-if="!job.has_applied">
+              <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Êtes-vous intéressé(e) ?</h3>
+              <button @click="handleApply" class="btn-primary w-full shadow-md justify-center">Postuler maintenant</button>
             </template>
             <template v-else>
               <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Vous avez déjà postulé</h3>
@@ -106,14 +111,29 @@ const jobsStore = useJobsStore()
 const authStore = useAuthStore()
 
 const { currentJob: job, loading } = storeToRefs(jobsStore)
+const isAuthenticated = computed(() => authStore.isAuthenticated)
 const isCandidate = computed(() => authStore.user?.role === 'candidate')
+const isRecruiter = computed(() => ['admin', 'recruiter'].includes(authStore.user?.role))
 
 
 const goBackSafely = () => {
   if (window.history.length > 1) {
     router.back()
   } else {
+    router.push(isAuthenticated.value ? '/jobs' : '/jobs-public')
+  }
+}
+
+const handleApply = () => {
+  if (!isAuthenticated.value) {
+    // Redirect to login with redirect parameter
+    router.push(`/login?redirect=${encodeURIComponent(`/jobs/${job.value?.id}/apply`)}`)
+  } else if (!isCandidate.value) {
+    // If user is not a candidate (e.g., recruiter), show message or redirect
     router.push('/jobs')
+  } else {
+    // User is candidate and authenticated, proceed to apply
+    router.push(`/jobs/${job.value?.id}/apply`)
   }
 }
 

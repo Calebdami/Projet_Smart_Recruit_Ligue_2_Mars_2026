@@ -20,15 +20,13 @@
       @cancel="ui.handleCancel"
     />
 
-    <transition name="layout-fade" mode="out-in">
-      <component :is="layoutComponent" :key="layoutName">
-        <router-view v-slot="{ Component }">
-          <transition name="page-fade" mode="out-in">
-            <component :is="Component" />
-          </transition>
-        </router-view>
-      </component>
-    </transition>
+    <component :is="layoutComponent" :key="layoutName">
+      <router-view v-slot="{ Component, route }">
+        <transition name="page-fade" mode="out-in">
+          <component :is="Component" :key="route.path" />
+        </transition>
+      </router-view>
+    </component>
   </div>
 </template>
 
@@ -40,6 +38,7 @@ import { useWebSocket } from '@/composables/useWebSocket'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import MainLayout from '@/layouts/MainLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
+import PublicLayout from '@/layouts/PublicLayout.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import NotificationToast from '@/components/common/NotificationToast.vue'
 
@@ -55,6 +54,7 @@ const layouts = {
   default: DefaultLayout,
   MainLayout,
   AuthLayout,
+  PublicLayout,
 }
 
 const layoutName = computed(() => route.meta.layout || 'default')
