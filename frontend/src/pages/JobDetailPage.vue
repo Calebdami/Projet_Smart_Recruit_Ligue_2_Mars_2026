@@ -12,6 +12,9 @@
           <div class="flex items-center gap-3">
             <h1 class="text-2xl font-bold text-slate-900 dark:text-white">{{ job.title }}</h1>
             <span :class="getStatusClass(job.status)">{{ getStatusLabel(job.status) }}</span>
+            <span v-if="job.has_applied" :class="getApplicationStatusClass(job.application_status)">
+              {{ getApplicationStatusLabel(job.application_status) }}
+            </span>
           </div>
           <p class="mt-2 text-slate-600 dark:text-slate-400">{{ job.department }} • {{ job.location }}</p>
         </div>
@@ -64,8 +67,19 @@
           </div>
           
           <div v-if="!$can('review_applications') && ['published', 'open'].includes(job.status)" class="rounded-xl border border-brand-100 bg-white p-4 shadow-sm dark:border-brand-900/50 dark:bg-black">
-            <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Êtes-vous intéressé(e) ?</h3>
-            <router-link :to="`/jobs/${job.id}/apply`" class="btn-primary w-full shadow-md justify-center">Postuler maintenant</router-link>
+            <template v-if="!job.has_applied">
+              <h3 class="font-semibold text-slate-900 dark:text-white mb-3">Êtes-vous intéressé(e) ?</h3>
+              <router-link :to="`/jobs/${job.id}/apply`" class="btn-primary w-full shadow-md justify-center">Postuler maintenant</router-link>
+            </template>
+            <template v-else>
+              <h3 class="font-semibold text-slate-900 dark:text-white mb-2">Vous avez déjà postulé</h3>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                Statut: <span :class="getApplicationStatusClass(job.application_status)">{{ getApplicationStatusLabel(job.application_status) }}</span>
+              </p>
+              <router-link v-if="job.application_id" :to="`/applications/${job.application_id}`" class="btn-secondary w-full justify-center text-sm">
+                Voir ma candidature →
+              </router-link>
+            </template>
           </div>
         </div>
       </div>
@@ -79,17 +93,20 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useJobsStore } from '@/stores/jobs'
+import { useAuthStore } from '@/stores/auth'
 import BaseLoading from '@/components/common/BaseLoading.vue'
 
 const route = useRoute()
 const router = useRouter()
 const jobsStore = useJobsStore()
+const authStore = useAuthStore()
 
 const { currentJob: job, loading } = storeToRefs(jobsStore)
+const isCandidate = computed(() => authStore.user?.role === 'candidate')
 
 
 const goBackSafely = () => {
@@ -119,6 +136,36 @@ const getStatusClass = (status) => {
 
 const getStatusLabel = (status) => ({ draft: 'Brouillon', published: 'Publié', closed: 'Clôturé' }[status])
 const formatDate = (date) => date ? new Date(date).toLocaleDateString('fr-FR') : '-'
+
+const getApplicationStatusClass = (status) => {
+  const statusClasses = {
+    new: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    reviewing: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+    screening: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+    interview: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    technical_test: 'bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300',
+    offer: 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300',
+    hired: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+    rejected: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+    withdrawn: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
+  }
+  return `rounded-full px-2.5 py-0.5 text-xs font-medium ${statusClasses[status] || 'bg-slate-100 text-slate-700'}`
+}
+
+const getApplicationStatusLabel = (status) => {
+  const labels = {
+    new: 'Candidature envoyée',
+    reviewing: 'En analyse',
+    screening: 'Présélection',
+    interview: 'Entretien',
+    technical_test: 'Test technique',
+    offer: 'Offre envoyée',
+    hired: 'Embauché(e)',
+    rejected: 'Refusé(e)',
+    withdrawn: 'Retirée'
+  }
+  return labels[status] || 'Candidature envoyée'
+}
 
 onMounted(() => loadJob())
 </script>

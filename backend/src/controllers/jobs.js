@@ -30,10 +30,29 @@ class JobController {
 
             const totalCount = parseInt(countResult.count);
 
+            // If user is a candidate, check which jobs they have applied to
+            let jobsWithApplicationStatus = jobs;
+            if (req.user && req.user.role === 'candidate') {
+                const candidate = await db('candidates').where('user_id', req.user.id).first();
+                if (candidate) {
+                    const applications = await db('applications')
+                        .where('candidate_id', candidate.id)
+                        .select('job_id', 'status');
+                    const appliedJobIds = new Set(applications.map(a => a.job_id));
+                    const applicationStatusMap = new Map(applications.map(a => [a.job_id, a.status]));
+
+                    jobsWithApplicationStatus = jobs.map(job => ({
+                        ...job,
+                        has_applied: appliedJobIds.has(job.id),
+                        application_status: applicationStatusMap.get(job.id) || null
+                    }));
+                }
+            }
+
             res.json({
                 success: true,
                 data: {
-                    jobs,
+                    jobs: jobsWithApplicationStatus,
                     pagination: {
                         total: totalCount,
                         page: parseInt(page),
@@ -68,9 +87,27 @@ class JobController {
             // Increment views count
             await db('jobs').where('id', id).increment('views_count', 1);
 
+            // If user is a candidate, check if they have applied to this job
+            let jobWithApplicationStatus = job;
+            if (req.user && req.user.role === 'candidate') {
+                const candidate = await db('candidates').where('user_id', req.user.id).first();
+                if (candidate) {
+                    const application = await db('applications')
+                        .where({ candidate_id: candidate.id, job_id: id })
+                        .first();
+
+                    jobWithApplicationStatus = {
+                        ...job,
+                        has_applied: !!application,
+                        application_status: application?.status || null,
+                        application_id: application?.id || null
+                    };
+                }
+            }
+
             res.json({
                 success: true,
-                data: job,
+                data: jobWithApplicationStatus,
             });
         } catch (error) {
             console.error('Get job by ID error:', error);

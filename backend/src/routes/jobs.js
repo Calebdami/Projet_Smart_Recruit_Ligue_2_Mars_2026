@@ -1,6 +1,6 @@
 import express from 'express';
 import { JobController } from '../controllers/jobs.js';
-import { authenticate, authorize } from '../middleware/auth.js';
+import { authenticate, optionalAuthenticate, authorize } from '../middleware/auth.js';
 import { body } from 'express-validator';
 import { validateRequest } from '../middleware/validation.js';
 
@@ -31,9 +31,9 @@ const jobUpdateValidation = [
   body('department').optional().isString(),
 ];
 
-// Public routes (anyone can view jobs)
-router.get('/', JobController.getAllJobs);
-router.get('/:id', JobController.getJobById);
+// Public routes with optional authentication (to check if candidate has applied)
+router.get('/', optionalAuthenticate, JobController.getAllJobs);
+router.get('/:id', optionalAuthenticate, JobController.getJobById);
 
 // Recruiter/Admin routes
 router.post('/',

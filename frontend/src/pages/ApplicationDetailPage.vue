@@ -34,8 +34,46 @@
           </div>
         </div>
 
-        <!-- Pipeline -->
+        <!-- Pipeline (visible pour recruteurs et candidats) -->
         <ApplicationPipeline v-if="!isCandidate" :current-status="application.status" @update-status="updateStatus" />
+        
+        <!-- Pipeline en lecture seule pour candidats -->
+        <div v-else class="card-elevated p-6">
+          <h2 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Évolution de votre candidature</h2>
+          <div class="flex items-center justify-between mb-6">
+            <div 
+              v-for="(step, index) in pipelineSteps" 
+              :key="step.value"
+              class="flex flex-col items-center flex-1"
+            >
+              <div
+                :class="[
+                  'h-10 w-10 rounded-full font-semibold text-sm flex items-center justify-center transition-all',
+                  application.status === step.value 
+                    ? 'bg-brand-500 text-white ring-4 ring-brand-200 dark:ring-brand-900 scale-110' 
+                    : isPipelineStepCompleted(index)
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400'
+                ]"
+              >
+                <span v-if="isPipelineStepCompleted(index)">✓</span>
+                <span v-else>{{ index + 1 }}</span>
+              </div>
+              <p class="mt-2 text-xs font-medium text-slate-700 dark:text-slate-300 text-center">
+                {{ step.label }}
+              </p>
+            </div>
+          </div>
+          <div class="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-4">
+            <p class="text-sm text-slate-600 dark:text-slate-400">
+              <span class="font-medium">Statut actuel:</span>
+              <span :class="getStatusClass(application.status)" class="ml-2">{{ getStatusLabel(application.status) }}</span>
+            </p>
+            <p class="mt-2 text-xs text-slate-500">
+              {{ getPipelineStatusDescription(application.status) }}
+            </p>
+          </div>
+        </div>
 
         <!-- Job Details -->
         <div v-if="!isCandidate" class="card-elevated p-6">
@@ -49,7 +87,19 @@
           </div>
         </div>
 
-        <div v-else class="card-elevated p-6 space-y-3">
+        <!-- Job Details pour candidats -->
+        <div class="card-elevated p-6">
+          <h2 class="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Offre concernée</h2>
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium text-slate-900 dark:text-white">{{ application.job?.title }}</p>
+              <p class="text-sm text-slate-600 dark:text-slate-400">{{ application.job?.department }} • {{ application.job?.location }}</p>
+            </div>
+            <router-link :to="`/jobs/${application.job?.id}`" class="text-sm text-brand-600 hover:underline dark:text-brand-400">Voir l'offre →</router-link>
+          </div>
+        </div>
+
+        <div class="card-elevated p-6 space-y-3">
           <h2 class="text-lg font-semibold text-slate-900 dark:text-white">Modifier ma candidature</h2>
           <label class="text-sm text-slate-600 dark:text-slate-300">Lettre de motivation</label>
           <textarea v-model="editableCoverLetter" rows="5" class="input-field" />
@@ -169,8 +219,37 @@ const goBackSafely = () => {
   if (window.history.length > 1) {
     router.back()
   } else {
-    router.push('/applications')
+    router.push(isCandidate.value ? '/my-applications' : '/applications')
   }
+}
+
+const pipelineSteps = [
+  { value: 'new', label: 'Nouvelle', order: 0 },
+  { value: 'reviewing', label: 'En évaluation', order: 1 },
+  { value: 'interview', label: 'Entretien', order: 2 },
+  { value: 'offer', label: 'Offre', order: 3 },
+  { value: 'hired', label: 'Embauché', order: 4 }
+]
+
+const isPipelineStepCompleted = (index) => {
+  const currentStep = pipelineSteps.find(s => s.value === application.value?.status)
+  const currentOrder = currentStep ? currentStep.order : -1
+  return index < currentOrder
+}
+
+const getPipelineStatusDescription = (status) => {
+  const descriptions = {
+    new: 'Votre candidature a été reçue et est en attente de première lecture.',
+    reviewing: 'Votre candidature est en cours d\'analyse par notre équipe de recrutement.',
+    screening: 'Votre profil est en phase de présélection.',
+    interview: 'Félicitations ! Vous êtes sélectionné(e) pour un entretien.',
+    technical_test: 'Vous devez passer un test technique.',
+    offer: 'Une offre d\'emploi vous a été proposée !',
+    hired: 'Félicitations ! Vous êtes embauché(e).',
+    rejected: 'Votre candidature n\'a pas été retenue pour ce poste.',
+    withdrawn: 'Vous avez retiré votre candidature.'
+  }
+  return descriptions[status] || 'Le statut de votre candidature est en cours de mise à jour.'
 }
 
 const { currentApplication: application, loading } = storeToRefs(applicationsStore)
